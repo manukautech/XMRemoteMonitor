@@ -1,5 +1,5 @@
 # XMRemoteMonitor Version 0.8 Beta
-A web app that enables Android smart phones and some other devices act as remote monitoring cameras capturing images on motion detection.
+A web app that enables Android smart phones and some other devices to act as remote monitoring cameras capturing images on motion detection.
 Scenarios include:
 - Security Camera
 - Watching bird sanctuaries to study rat and other pest behaviours
