@@ -32,8 +32,6 @@ Why not simply go to a shop and buy security cameras? How does this app compete?
 - Big advantages for customisation and adapting to special needs in having a system that is all our code, especially control of our own server.
 - Smart phones and other HTML-JS-capable devices e.g. Raspberry Pi Zero have advantages for environments without mains electricity. So far all of our field tests have been in such environments.
 
-More details in this document: https://github.com/manukautech/XMRemoteMonitor/blob/master/Docu_XMRemoteMonitor.docx  
-
 "XMRemoteMonitor" is a spinoff from "XMRemoteRobot":  
 [https://github.com/manukautech/XMRemoteRobot](https://github.com/manukautech/XMRemoteRobot)
 
