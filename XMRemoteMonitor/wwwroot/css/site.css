@@ -1,0 +1,56 @@
+﻿* {
+    font-family: Verdana;
+    font-size: 0.4cm;
+    box-sizing: border-box; /*includes content, padding and border, but not the margin*/
+}
+
+body {
+    background-color: lightgreen;
+}
+
+/* Container div controlling body appearance */
+.body-content {
+    background-color: honeydew;
+    max-width: 1220px;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: 95vh;
+    padding-bottom: 20px;
+    margin-top: 0px;
+}
+
+nav {
+    background-color: black;
+    width:100%;
+    padding-left: 20px;
+    padding-top: 4px;
+    padding-bottom: 4px;   
+}
+
+nav div {
+    display: inline;
+}
+
+nav a {
+    color: lightgreen;
+    text-decoration: none;
+}
+
+nav a:hover {
+    color: yellow;
+    text-decoration: overline;
+}
+
+.page-content {
+    padding-top: 1em;
+    padding-left: 20px;
+    padding-right: 20px;
+    min-height: 80vh;
+}
+
+#ReviewDisplay table, #ReviewDisplay td {
+    border: solid;
+    border-width: 2px;
+    border-color: lightgrey;
+}
+
