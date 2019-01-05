@@ -26,7 +26,7 @@ Current issues include:
 - Motion Detection in daylight field tests gets a lot of false positives from trees and plants moving in the wind as well as light level changes as clouds move across the sun
 - Can smart phone cameras work with infra red lighting? Early testing suggests yes but with a question mark over sensitivity.
 - Is infra red lighting the best human intruder management security strategy? Visible light flash may be better.
-- Care with privacy issues when using as a security camera. For our scenarios a good starting point is to only use in private spaces - avoiding any visibility of public and semi-public spaces.
+- Care with privacy issues when using as a security camera. For our scenarios a starting point is to only use in private spaces at times where there should be no-one there. Avoid any visibility of public and semi-public spaces. Check and review your territory privacy laws and regulations.
 
 Why not simply go to a shop and buy security cameras? How does this app compete?
 - Big advantages for customisation and adapting to special needs in having a system that is all our code, especially control of our own server.
