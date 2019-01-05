@@ -6,15 +6,12 @@ Scenarios include:
 
 Easiest use is on devices which can run an HTML5-capable browser which continues to run when the screen is locked. For Android smart phones this usually means installing and using FireFox. We find that we cannot install FireFox on some low cost phones but we have had success with coding an app for them based on the same HTML and JavaScript packaged with "Droidscript". The basic Droidscript is free from Google Play.
 
-Summary
-For more details see "details.md" and the Issues section of this repo.
-
 This XMRemoteMonitor download has a placeholder "Access Key" of "111111",
 Edit "appSettings.json" to change this. 
 We recommend a 6 digit number for easy data entry from a smart phone.
 
 Run XMRemoteMonitor on a Windows machine with Visual Studio 2017 installed. We use the "Community Edition" which is free of charge for education, individuals and small businesses. Also download and install ".NET Core 2.2 SDK" from:
-[https://www.microsoft.com/net/download/core](https://www.microsoft.com/net/download/core)
+[https://www.microsoft.com/net/download/core](https://www.microsoft.com/net/download/core)  
 If you are running the full IIS Webserver on your test machine, you will also need to download and install ".NET Core Runtime".  
 
 Quickest first test is to run in Visual Studio on a computer with a webcam. Run in 2 windows: select "WebPageCam" in one and "Monitor" in the other.
