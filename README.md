@@ -22,15 +22,17 @@ XMRemoteMonitor writes captured photos to a folder named "modet" (motion detecti
 
 Current issues include:  
 - Power supply for environments without mains power. We are working on combinations of additional batteries and solar panels.
-- Near-real-time Monitor has stopped working on some field tests
-- Motion Detection in daylight field tests gets a lot of false positives from trees and plants moving in the wind as well as light level changes as clouds move across the sun
+- Near-real-time Monitor has stopped working on some field tests.  We recommend trying "Monitor" only for short run lab testing.  "Review" gives us reliable remote viewing so stick to "Review" until further notice.  
+- Motion Detection in daylight field tests gets a lot of false positives from trees and plants moving in the wind as well as light level changes as clouds move across the sun.  
 - Can smart phone cameras work with infra red lighting? Early testing suggests yes but with a question mark over sensitivity.
 - Is infra red lighting the best human intruder management security strategy? Visible light flash may be better.
-- Care with privacy issues when using as a security camera. For our scenarios a starting point is to only use in private spaces at times where there should be no-one there. Avoid any visibility of public and semi-public spaces. Check and review your territory privacy laws and regulations.
+- Care with privacy issues when using as a security camera. For our scenarios a starting point is to only use in private spaces at times where there should be no person there. Avoid any visibility of public and semi-public spaces. Check and review the privacy laws and regulations for your nation and/or territory.  
+- Care with setting up devices outdoors so they do not overheat in sunlight. Best simple quick enclosure from our testing results is a transparent plastic food container lined with white paper.  
 
 Why not simply go to a shop and buy security cameras? How does this app compete?
-- Big advantages for customisation and adapting to special needs in having a system that is all our code, especially control of our own server.
+- A system that is all our code has big advantages for customisation and adapting to special needs. It is especially good to have control of our own server setup and programming.
 - Smart phones and other HTML-JS-capable devices e.g. Raspberry Pi Zero have advantages for environments without mains electricity. So far all of our field tests have been in such environments.
+- There is a good supply on auction sites of smart phones with cracked screens at low prices.  
 
 "XMRemoteMonitor" is a spinoff from "XMRemoteRobot":  
 [https://github.com/manukautech/XMRemoteRobot](https://github.com/manukautech/XMRemoteRobot)
