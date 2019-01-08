@@ -28,6 +28,7 @@ Current issues include:
 - Is infra red lighting the best human intruder management security strategy? Visible light flash may be better.
 - Care with privacy issues when using as a security camera. For our scenarios a starting point is to only use in private spaces at times where there should be no person there. Avoid any visibility of public and semi-public spaces. Check and review the privacy laws and regulations for your nation and/or territory.  
 - Care with setting up devices outdoors so they do not overheat in sunlight. Best simple quick enclosure from our testing results is a transparent plastic food container lined with white paper.  
+- Keep phones vertical. We have tried turning them horizontal for a wider view image. The results range from distortion to crashes and vary wildly with different phones or even the same phone with changes in settings. Needs more investigation.  
 
 Why not simply go to a shop and buy security cameras? How does this app compete?
 - A system that is all our code has big advantages for customisation and adapting to special needs. It is especially good to have control of our own server setup and programming.
