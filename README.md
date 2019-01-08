@@ -24,7 +24,7 @@ Current issues include:
 - Power supply for environments without mains power. We are working on combinations of additional batteries and solar panels.
 - Near-real-time Monitor has stopped working on some field tests.  We recommend trying "Monitor" only for short run lab testing.  "Review" gives us reliable remote viewing so stick to "Review" until further notice.  
 - Motion Detection in daylight field tests gets a lot of false positives from trees and plants moving in the wind as well as light level changes as clouds move across the sun.  
-- Can smart phone cameras work with infra red lighting? Early testing suggests yes but with a question mark over sensitivity.
+- Can smart phone cameras deliver night vision with infra red lighting? Early testing suggests yes but with a question mark over sensitivity.
 - Is infra red lighting the best human intruder management security strategy? Visible light flash may be better.
 - Care with privacy issues when using as a security camera. For our scenarios a starting point is to only use in private spaces at times where there should be no person there. Avoid any visibility of public and semi-public spaces. Check and review the privacy laws and regulations for your nation and/or territory.  
 - Care with setting up devices outdoors so they do not overheat in sunlight. Best simple quick enclosure from our testing results is a transparent plastic food container lined with white paper.  
