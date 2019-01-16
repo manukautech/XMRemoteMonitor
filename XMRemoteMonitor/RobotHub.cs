@@ -30,18 +30,7 @@ namespace XMRemoteMonitor
             _env = env;
         }
 
-        //Camera monitor variation
-        public async Task PutImage(string base64Image)
-        {
-            string response;
-
-
-            response = "OK " + DateTime.Now;
-            await Clients.Caller.SendAsync("XSignal", response);
-        }
-
-
-
+        
         //20180717 JPC start with simplest working system
         //Extend later into control of trials online with access for limited time
 
@@ -61,13 +50,13 @@ namespace XMRemoteMonitor
         ,"islog:0;"xdata":{ "sx1x1":92, "sx1x2":83, "sx2x1":0, "sx2x2":0}}
         */
 
-        public async Task XSignal(string received)
+        public async Task XSignal(string request)
         {
             string response = "";
             //unpack JSON
             //20180722 JPC change from JObject to NewtonSoft.Json.JsonConvert
-            dynamic receivedObject = JsonConvert.DeserializeObject(received);
-            string accessKey = (string)receivedObject.SelectToken("accesskey");
+            dynamic requestObject = JsonConvert.DeserializeObject(request);
+            string accessKey = (string)requestObject.SelectToken("accesskey");
             //simple access check
             if (accessKey != _appAccessKey)
             {
@@ -76,9 +65,9 @@ namespace XMRemoteMonitor
                 return;
             }
 
-            int categoryId = (int)receivedObject.SelectToken("categoryid");
-            int commanderId = (int)receivedObject.SelectToken("commanderid");
-            int robotId = (int)receivedObject.SelectToken("robotid");
+            int categoryId = (int)requestObject.SelectToken("categoryid");
+            int commanderId = (int)requestObject.SelectToken("commanderid");
+            int robotId = (int)requestObject.SelectToken("robotid");
 
             //map recipient id to generated signalr Client Id
             int recipientId = 0;
@@ -154,16 +143,16 @@ namespace XMRemoteMonitor
                     //information source: the aspnet/SignalR project on Github
                     //https://github.com/aspnet/SignalR/blob/release/2.2/samples/SignalRSamples/Hubs/Chat.cs
                     //line 34 as retrieved July 18, 2018
-                    string[] receivedArray = received.Split(",");
-                    for(int i = 0; i < receivedArray.Length; i++)
+                    string[] signalArray = request.Split(",");
+                    for(int i = 0; i < signalArray.Length; i++)
                     {
-                        if(receivedArray[i].IndexOf("accesskey") > -1)
+                        if(signalArray[i].IndexOf("accesskey") > -1)
                         {
-                            receivedArray[i] = "\"issuccess\":true";
+                            signalArray[i] = "\"issuccess\":true";
                             break;
                         }
                     }
-                    response = String.Join(",", receivedArray);
+                    response = String.Join(",", signalArray);
                     await Clients.Client(userId).SendAsync("XSignal", response);
                 }
                 else
