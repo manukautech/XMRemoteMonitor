@@ -2,16 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <Version>0.8.0</Version>
+    <Version>0.8.1</Version>
     <UserSecretsId>797dff71-81b8-4c84-8d83-5b55bd42e3d9</UserSecretsId>
     <TypeScriptToolsVersion>3.1</TypeScriptToolsVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="wwwroot\images\MotionDetected\**" />
-    <Content Remove="wwwroot\images\MotionDetected\**" />
-    <EmbeddedResource Remove="wwwroot\images\MotionDetected\**" />
-    <None Remove="wwwroot\images\MotionDetected\**" />
+    <Compile Remove="wwwroot\images\**" />
+    <Content Remove="wwwroot\images\**" />
+    <EmbeddedResource Remove="wwwroot\images\**" />
+    <None Remove="wwwroot\images\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,12 +31,6 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\images\" />
-    <Folder Include="wwwroot\modet\2018-12-13\1\" />
-    <Folder Include="wwwroot\modet\2018-12-15\1\" />
   </ItemGroup>
 
 </Project>

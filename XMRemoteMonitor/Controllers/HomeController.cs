@@ -54,12 +54,17 @@ namespace XMRemoteMonitor.Controllers
         [HttpGet]
         public string GetSettings()
         {
+            List<string> imgBase64 = new List<string>();
+            imgBase64.Add(System.IO.File.ReadAllText(_env.WebRootPath + "\\res\\PlaceholderBase64.txt"));
             ResponseAJAX response = new ResponseAJAX()
             {
-                categoryid = 20, method = "GetSettings", issuccess = true, debug = _debug
+                categoryid = 20, method = "GetSettings",
+                issuccess = true, debug = _debug,
+                xdata = imgBase64
             };
-            string json = JsonConvert.SerializeObject(response);
-            return json;
+            //2019-01-16 apply our new convention of "signal" as the keyword for a package of metadata and data in json string format
+            string signal = JsonConvert.SerializeObject(response);
+            return signal;
             //Previous version had low level code which looked like this example
             //string json = "{\"categoryid\":20, \"method\":\"GetSettings\", \"issuccess\":true, \"debug\":" + _debug + "}";
         }
@@ -118,8 +123,8 @@ namespace XMRemoteMonitor.Controllers
                 response.issuccess = false;
                 response.message = "ERROR: " + tracking + " " + e.Message + ".";
             }
-            string jsonResponse = JsonConvert.SerializeObject(response);
-            return jsonResponse;
+            string signal = JsonConvert.SerializeObject(response);
+            return signal;
         }
 
         //2018-12-26
@@ -172,8 +177,8 @@ namespace XMRemoteMonitor.Controllers
                 response.message = "ERROR: " + e.Message + ".";
             }
 
-            string json = JsonConvert.SerializeObject(response);
-            return json;
+            string signal = JsonConvert.SerializeObject(response);
+            return signal;
         }
 
 		public IActionResult Error()

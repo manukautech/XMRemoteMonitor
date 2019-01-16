@@ -2,6 +2,478 @@
 <html>
 <head>
     <link href="css/site.css" rel="stylesheet" />
+
+    <!--2019-01-08 move all scripting to the head section so that code most subject 
+    to configuration appears first-->
+    <script src="js/signalr.min.js"></script>
+    <script src="js/diff-cam-engine-xjpc.js"></script>
+
+    <script>
+        var isSendingLock = false;
+        //2018-12-26 JPC add capability for repeat send attempts when internet connectivity is marginal
+        var lockTimeStart = (new Date()).getTime();
+        var lockTimeout = 30000; //30 seconds
+        //2018-12-26 JPC trigger override capture without motion detection on long timeout
+        var overrideTimeout = 900000; //900 seconds ie 15 min
+        var workingOverrideTimeout = overrideTimeout;
+        //var isAJAXNav = false; // -- possible future use for loading page panels from separate files by AJAX
+
+        var hasReadSettings = false;
+        var isSignalRConnection = false;
+        var debug = false;
+
+        //Initialise CommanderId = 0 for initial test of SignalR
+        var commanderId = 0;
+        var robotId = 100;
+
+        //Setup SignalR
+        var connection;
+
+        var diffCamOptions;
+
+        //Setup AJAX  refs
+        //https://www.w3schools.com/xml/ajax_xmlhttprequest_send.asp
+        //https://www.w3schools.com/js/js_ajax_http.asp
+        var xmlhttp = new XMLHttpRequest();
+
+        //2019-01-09 JPC have a placeholder image for use when camera is scheduled off 
+        //    but still needs to run to keep the session alive.
+        var placeholderBase64 = "";
+
+        //Scheduled active from 7pm to 6:30am on weekdays plus all weekend
+        //'return true' effect is to capture images on motion detection
+        //'return false' effect is to NOT capture images on motion detection
+        //.. but do take a "keep session alive" photo every 15 min.
+        function scheduledActive() {
+            //uncomment next statement "return true;" to switch off scheduling
+            return true;
+
+            var d = new Date();
+            //Remain active through the weekend
+            if (d.getDay() == 6 || d.getDay() == 0) {
+                return true;
+            }
+            var dayMinutes = d.getHours() * 60 + d.getMinutes();
+            if (dayMinutes >= 19 * 60) {
+                //7pm
+                return true;
+            } else if (dayMinutes <= 6 * 60 + 30) {
+                //6:30am
+                return true;
+            }
+            return false;
+        }
+
+        window.onload = function () {
+            //Setup diff-cam-engine
+            xvideo = document.getElementById('xcam');
+            xcanvas = document.getElementById('xmotion');
+            diffCamOptions = {
+                scoreThreshold: 100,
+                imageMimeType: "image/jpeg",
+                jpegQuality: 0.3,
+                facingCamera: "default",
+                captureWidth: 800,
+                captureHeight: 800,
+                //2018-12-26 JPC increase captureIntervalTime from 100ms
+                captureIntervalTime: 200,
+                video: xvideo,
+                motionCanvas: xcanvas,
+                initSuccessCallback: initSuccess,
+                initErrorCallback: initError,
+                captureCallback: xcapture
+            }
+
+            //Setup SignalR
+            connection = new signalR.HubConnectionBuilder().withUrl(appPath() + "robothub").build();
+            //Initialise the SignalR library
+            try {
+                connection.start();
+            } catch (err) {
+                alert("Error on first connection: " + err.message);
+            }
+            //SignalR - setup for receive from server
+            connection.on("XSignal", function (signal) {
+                xreceive(signal);
+            });
+
+            //Initialise AJAX
+            xmlhttp.onreadystatechange = function () {
+                ajaxCallback();
+            };
+
+            if (!hasReadSettings) {
+                //Read the app setting from an AJAX call to server-side
+                //html-based rather than MVC-cshtml-based makes path management easier
+                requestURL = "Home/GetSettings";
+                xmlhttp.open("GET", requestURL, true);
+                //xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                isSendingLock = true;
+                xmlhttp.send();
+            }
+        };
+
+        function xnav(panelId) {
+            //if any async work in progress then leave to run
+            if (isSendingLock) return;
+            if (!isSignalRConnection) {
+                alert("You need to provide the Access Key before you can use this app.");
+                return;
+            }
+            //"single page" approach with hide and show panels
+            var navList = document.getElementsByClassName("xpage");
+            for (i = 0; i < navList.length; i++) {
+                if (navList[i].id == panelId) {
+                    navList[i].style.display = "block";
+                } else {
+                    navList[i].style.display = "none";
+                }
+            }
+        }
+
+        function ajaxCallback() {
+            if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+                var signal = xmlhttp.responseText;
+                isSendingLock = false;
+                //our AJAX methods return json strings so can use same json handling
+                //function xreceive as SignalR
+                xreceive(signal);
+            }
+        }
+
+        //SignalR and AJAX responses in json format both handled by this one function
+        function xreceive(signal) {
+            var jsonObject = JSON.parse(signal);
+            if (signal.indexOf("issuccess") > -1 && !jsonObject.issuccess) {
+                alert(jsonObject.message);
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 20) {
+                //Response to GetSettings
+                if (jsonObject.debug) debug = true;
+                placeholderBase64 = jsonObject.xdata[0];
+                document.getElementById("Monitor").innerText = "AJAX connection is ready.";
+                hasReadSettings = true;
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 21) {
+                document.getElementById("Monitor").innerText = "Image saved OK at " + xgetTime() + ".";
+                var jsonResponse = new Object();
+                jsonResponse["categoryid"] = 2;
+                jsonResponse["commanderid"] = robotId - 100;
+                jsonResponse["robotid"] = robotId;
+                jsonResponse["accesskey"] = document.getElementById("AccessKey").value;
+                jsonResponse["message"] = jsonObject.message;
+                var jsonString = JSON.stringify(jsonResponse);
+                connection.invoke("XSignal", jsonString);
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 22) {
+                reviewProcess(jsonObject);
+
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 6 && jsonObject.commanderid == 0) {
+                //authentication success
+                document.getElementById("LoginConfirm").innerText = jsonObject.message;
+                document.getElementById("AccessKey").disabled = true;
+                document.getElementById("XSubmit").disabled = true;
+                isSignalRConnection = true;
+                //technique for temporary emphasis
+                document.getElementById("LoginConfirm").style.backgroundColor = "yellow";
+                document.getElementById("LoginConfirm").style.fontWeight = "bold";
+                window.setTimeout(timeoutLoginDisplay, 1200);
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 6) {
+                document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " connected.";
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 5) {
+                document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " monitoring.";
+                document.getElementById("MonitorDetail").style.display = "block";
+                remoteCapture();
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 2) {
+                //robot sends data to commander, in this case the message is the URL for the newly captured image:
+                if (jsonObject.commanderid == commanderId) {
+                    //2019-01-01 JPC manage switching display viewable/not viewable
+                    if (document.getElementById("MonitorDetail").style.display == "block") {
+                        document.getElementById("imgMonitor").src = jsonObject.message;
+                        document.getElementById("Monitor").innerText = "Image received from Camera " + jsonObject.commanderid + " at " + xgetTime();
+                    }
+                }
+            } else if (jsonObject.categoryid && jsonObject.categoryid == 1) {
+                //commander sends data to robot
+                if (jsonObject.robotid == robotId) {
+                    if (jsonObject.message == "capture" && !isSendingLock) {
+                        workingOverrideTimeout = 0;
+                    }
+                }
+            } else {
+                alert(response + "ERROR: Data from server is badly formatted or otherwise not making sense.")
+            }
+            if (debug) DebugDisplay(response);
+        }
+
+        function timeoutLoginDisplay() {
+            document.getElementById("LoginConfirm").style.backgroundColor = "transparent";
+            document.getElementById("LoginConfirm").style.fontWeight = "normal";
+        }
+
+        function DebugDisplay(response) {
+            document.getElementById("DebugDisplay").innerText = response;
+            document.getElementById("DebugDisplay").style.backgroundColor = "yellow";
+            document.getElementById("DebugDisplay").style.fontWeight = "bold";
+            window.setTimeout(timeoutDebugDisplay, 1200);
+        }
+
+        function timeoutDebugDisplay() {
+            document.getElementById("DebugDisplay").style.backgroundColor = "transparent";
+            document.getElementById("DebugDisplay").style.fontWeight = "normal";
+        }
+        //---------------------------------------------------
+        //Login - authentication
+        function xstart() {
+            //Example registration - "robot" device gets started with "categoryid":6
+            // { "categoryid": 6, "commanderid": 0, "robotid": 100, "accesskey": "demo-access-key" }
+            var jsonObject = new Object();
+            jsonObject["categoryid"] = 6;
+            jsonObject["commanderid"] = commanderId;
+            jsonObject["robotid"] = commanderId + 100;
+            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
+
+            var signal = JSON.stringify(jsonObject);
+            connection.invoke("XSignal", signal);
+        }
+
+    </script>
+
+    <script>
+        //WebPageCam camera handler
+        function wstart() {
+            //Initialise the DiffCamEngine libary for image capture
+            DiffCamEngine.init(diffCamOptions);
+
+            robotId = parseInt(document.getElementById("CameraNumber").value) + 100;
+            var jsonObject = new Object();
+            jsonObject["categoryid"] = 6;
+            jsonObject["commanderid"] = robotId - 100;
+            jsonObject["robotid"] = robotId;
+            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
+
+            var signal = JSON.stringify(jsonObject);
+            connection.invoke("XSignal", signal);
+        }
+
+        function initSuccess() {
+            DiffCamEngine.start();
+        }
+
+        function initError() {
+            alert('Error on camera initialisation');
+        }
+
+        function xcapture(payload) {
+            var timeStart = (new Date()).getTime();
+            if (timeStart > lockTimeStart + lockTimeout) {
+                isSendingLock = false;
+            }
+            var isCaptureOverride = false;
+            if (timeStart >= lockTimeStart + workingOverrideTimeout - 1000 && !isSendingLock) {
+                isCaptureOverride = true;
+                workingOverrideTimeout = overrideTimeout;
+            }
+            if (isSendingLock) return;
+
+            //20190107 JPC scheduled times
+            if (!scheduledActive() && !isCaptureOverride) return;
+
+            //2018-12-26 JPC trigger override capture on long timeout
+            if (payload.hasMotion || isCaptureOverride) {
+                try {
+                    var request
+                    if (scheduledActive()) {
+                        request = payload.getURL();
+                    } else {
+                        request = placeholderBase64;
+                    }
+                    var requestCheck = request.slice(0, 307);
+                    //document.getElementById("Monitor").innerText = request.length + " ..." + requestCheck.slice(75, 100) + "...";
+
+                    var formData = new FormData();
+                    formData.append("CameraNumber", document.getElementById("CameraNumber").value);
+                    formData.append("AccessKey", document.getElementById("AccessKey").value);
+                    //2018-12-16 JPC change from image/png to image/jpeg means that we need slice(headerLength) rather than slice(23) or slice(22)
+                    headerLength = requestCheck.indexOf(";base64,") + 8;
+                    formData.append("ImageBase64", request.slice(headerLength));
+
+                    //2018-12-15 JPC allow for use of an application folder that is a child of a website
+                    //website is "/", child application is "/rm/"
+                    var requestString = appPath() + "Home/ImagePost";
+                    var oeWebPageCamInfo = document.getElementById("WebPageCamInfo");
+                    if (isCaptureOverride) {
+                        oeWebPageCamInfo.innerText = "Override ";
+                    } else {
+                        oeWebPageCamInfo.innerText = "Sending ";
+                    }
+                    oeWebPageCamInfo.innerText += request.length + " chars ";
+                    if (debug) oeWebPageCamInfo.innerText += "..." + requestCheck.slice(300, 307) + "..."
+                    oeWebPageCamInfo.innerText += " at " + xgetTime();
+                    if (debug) oeWebPageCamInfo.innerText += " to " + requestString;
+                    //throw new Error("Test error");
+
+                    xmlhttp.open("POST", requestString, true);
+                    //xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    isSendingLock = true;
+                    xmlhttp.send(formData);
+                    //2018-12-26 JPC timeout for unlock
+                    lockTimeStart = timeStart;
+                } catch (ex) {
+                    document.getElementById("Monitor").innerText = "ERROR in capture processing: " + ex.message;
+                }
+            }
+        }
+
+    </script>
+
+    <script>
+        //Monitor handler
+        function mstart() {
+            commanderId = parseInt(document.getElementById("CameraNumberMonitor").value);
+            var jsonObject = new Object();
+            jsonObject["categoryid"] = 5;
+            jsonObject["commanderid"] = commanderId;
+            jsonObject["robotid"] = commanderId + 100;
+            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
+
+            var signal = JSON.stringify(jsonObject);
+            connection.invoke("XSignal", signal);
+        }
+
+        function remoteCapture() {
+            var jsonObject = new Object();
+            jsonObject["categoryid"] = 1; //human commander controls "robot" = camera in this case
+            jsonObject["commanderid"] = commanderId;
+            jsonObject["robotid"] = commanderId + 100;
+            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
+            jsonObject["message"] = "capture";
+            var signal = JSON.stringify(jsonObject);
+            connection.invoke("XSignal", signal);
+        }
+
+        function viewMonitor() {
+            document.getElementById("MonitorDisplay").style.display = "block";
+            document.getElementById("ReviewDisplay").style.display = "none";
+            document.getElementById("ViewMonitor").style.backgroundColor = "rgb(255, 255, 180)";
+            document.getElementById("ViewReview").style.backgroundColor = "lightgrey";
+        }
+
+        function viewReview() {
+            document.getElementById("MonitorDisplay").style.display = "none";
+            document.getElementById("ReviewDisplay").style.display = "block";
+            document.getElementById("ViewMonitor").style.backgroundColor = "lightgrey";
+            document.getElementById("ViewReview").style.backgroundColor = "rgb(255, 255, 180)";
+
+            if (document.getElementById("DateFolders").childElementCount == 0) {
+                var formData = new FormData();
+                formData.append("AccessKey", document.getElementById("AccessKey").value);
+                formData.append("DateFolder", "none");
+                formData.append("CameraFolder", "none");
+                var requestString = appPath() + "Home/ImageList";
+                xmlhttp.open("POST", requestString, true);
+                isSendingLock = true;
+                xmlhttp.send(formData);
+                //2018-12-26 JPC timeout for unlock
+                lockTimeStart = (new Date()).getTime();
+            }
+        }
+
+        function folderChange(oeFolder) {
+            var formData = new FormData();
+            formData.append("AccessKey", document.getElementById("AccessKey").value);
+            if (oeFolder.id == "DateFolders") {
+                formData.append("DateFolder", oeFolder.value);
+                formData.append("CameraFolder", "none");
+            } else {
+                formData.append("DateFolder", document.getElementById("DateFolders").value);
+                formData.append("CameraFolder", oeFolder.value);
+            }
+            var requestString = appPath() + "Home/ImageList";
+            xmlhttp.open("POST", requestString, true);
+            isSendingLock = true;
+            xmlhttp.send(formData);
+            //2018-12-26 JPC timeout for unlock
+            lockTimeStart = (new Date()).getTime();
+        }
+
+        function reviewProcess(jsonObject) {
+            var level = jsonObject.message.split("/").length;
+            var gen = "";
+            if (level <= 2) {
+                //list is of folder names
+                for (i = 0; i < jsonObject.xdata.length; i++) {
+                    gen += "<option value=\"" + jsonObject.xdata[i] + "\">" + jsonObject.xdata[i] + "</option>";
+                }
+                if (level == 1) {
+                    document.getElementById("DateFolders").innerHTML = gen;
+                    document.getElementById("CameraFolders").innerHTML = "";
+                } else {
+                    document.getElementById("CameraFolders").innerHTML = gen;
+                }
+                document.getElementById("Images").innerHTML = "";
+            } else {
+                //list is of file names
+                var path = "modet"
+                    + "/" + document.getElementById("DateFolders").value
+                    + "/" + document.getElementById("CameraFolders").value + "/";
+                for (i = 0; i < jsonObject.xdata.length; i++) {
+                    gen += "<div style=\"padding-left:10px;padding-bottom:20px;float:left\">"
+                        + "<img src =\"" + path + jsonObject.xdata[i] + "\" "
+                        + "style=\"width:220px;\" /><br />"
+                        + "<a href=\"" + path + jsonObject.xdata[i] + "\" target=\"_blank\">"
+                        + jsonObject.xdata[i].replace("-", ":").replace("-", ":").replace(".jpg", "") + "</a></div>";
+                    //bandwidth limit on image display
+                    if (i == 399) {
+                        document.getElementById("ReviewHeader").innerHTML
+                            = "There are " + jsonObject.xdata.length + " images in this folder. The most recent " + (i + 1).toString() + " are displayed. Use server access methods like RDC or FTPS to see all.";
+                        break;
+                    }
+                    if (i == jsonObject.xdata.length - 1) {
+                        document.getElementById("ReviewHeader").innerHTML
+                            = "There are " + jsonObject.xdata.length + " images in this folder.";
+                    }
+                }
+                document.getElementById("Images").innerHTML = gen + "<div style=\"clear:both\">&nbsp;</div>";
+            }
+
+        }
+
+        function reviewRefresh() {
+            //single refresh button
+            //check first that the Cameras listbox is populated
+            if (document.getElementById("CameraFolders").innerHTML.indexOf("<option") > -1) {
+                folderChange(document.getElementById('CameraFolders'));
+            } else {
+                alert("Select Date and Camera Number to view images.");
+            }
+        }
+
+
+    </script>
+
+    <script>
+        //Utility functions
+        function appPath() {
+            //typical value of location.href is
+            // "https://www.example.com/m249872/index.html"
+            //split on "/" gives length = 5 and .split[3] as the virtual directory value
+            var pathElements = location.href.split("/");
+            if (pathElements.length == 4) {
+                return "/";
+            } else {
+                return "/" + pathElements[3] + "/";
+            }
+        }
+
+        function xgetTime() {
+            var d = new Date();
+            var hours = ("00" + d.getHours()).slice(-2);
+            var minutes = ("00" + d.getMinutes()).slice(-2);
+            var seconds = ("00" + d.getSeconds()).slice(-2);
+            var milliseconds = (d.getMilliseconds() + "000").slice(2);
+            nowTime = hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+            return nowTime;
+        }
+
+    </script>
 </head>
 <body>
     <!--Not bootstrap. Simpler custom layout -->
@@ -145,441 +617,6 @@
 
         </footer>
     </div>
-
-
-    <script src="js/signalr.min.js"></script>
-    <script src="js/diff-cam-engine-xjpc.js"></script>
-
-    <script>
-        var isSendingLock = false;
-        //2018-12-26 JPC add capability for repeat send attempts when internet connectivity is marginal
-        var lockTimeStart = (new Date()).getTime();
-        var lockTimeout = 30000; //30 seconds
-         //2018-12-26 JPC trigger override capture without motion detection on long timeout
-        var overrideTimeout = 900000; //900 seconds ie 15 min
-        var workingOverrideTimeout = overrideTimeout;
-        //var isAJAXNav = false; // -- possible future use for loading page panels from separate files by AJAX
-
-        var hasReadSettings = false;
-        var isSignalRConnection = false;
-        var debug = false;
-
-        //Initialise CommanderId = 0 for initial test of SignalR
-        var commanderId = 0;
-        var robotId = 100;
-
-        //Setup SignalR
-        var connection;
-            
-        //Setup AJAX  refs
-        //https://www.w3schools.com/xml/ajax_xmlhttprequest_send.asp
-        //https://www.w3schools.com/js/js_ajax_http.asp
-        var xmlhttp = new XMLHttpRequest();
-
-        window.onload = function () {
-            //Setup SignalR
-            connection = new signalR.HubConnectionBuilder().withUrl(appPath() + "robothub").build();
-            //Initialise the SignalR library
-            try {
-                connection.start();
-            } catch (err) {
-                alert("Error on first connection: " + err.message);
-            }
-            //SignalR - setup for receive from server
-            connection.on("XSignal", function (response) {
-                xreceive(response);
-            });
-
-            //Initialise AJAX
-            xmlhttp.onreadystatechange = function () {
-                ajaxCallback();
-            };
-
-            if (!hasReadSettings) {
-                //Read the app setting from an AJAX call to server-side
-                //html-based rather than MVC-cshtml-based makes path management easier
-                requestURL = "Home/GetSettings";
-                xmlhttp.open("GET", requestURL, true);
-                //xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                isSendingLock = true;
-                xmlhttp.send();
-            }
-        };
-
-        function xnav(panelId) {
-            //if any async work in progress then leave to run
-            if(isSendingLock) return;
-            if (!isSignalRConnection) {
-                alert("You need to provide the Access Key before you can use this app.");
-                return;
-            }
-            //"spa" approach with hide and show panels
-            var navList = document.getElementsByClassName("xpage");
-            for (i = 0; i < navList.length; i++) {
-                if (navList[i].id == panelId) {
-                    navList[i].style.display = "block";
-                } else {
-                    navList[i].style.display = "none";
-                }
-            }
-            //Alternative. AJAX method to read a partial page file. Needs page caching disabled.
-            //xmlhttp.open("GET", pageURL, true)
-            //isAJAXNav = true;
-            //xmlhttp.send();
-        }
-
-        function ajaxCallback() {
-            if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-                var response = xmlhttp.responseText;
-                isSendingLock = false;
-                //our AJAX methods return json strings so can use same json handling
-                //function xreceive as SignalR
-                xreceive(response);
-            }
-        }
-       
-        //SignalR and AJAX responses in json format both handled by this one function
-        function xreceive(response) {
-            var jsonObject = JSON.parse(response);
-            if (response.indexOf("issuccess") > -1 && !jsonObject.issuccess) {
-                alert(jsonObject.message);
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 20) {
-                if (jsonObject.debug) debug = true;
-                document.getElementById("Monitor").innerText = "AJAX connection is ready.";
-                hasReadSettings = true;
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 21) {
-                document.getElementById("Monitor").innerText = "Image saved OK at " + xgetTime() + ".";
-                var jsonResponse = new Object();
-                jsonResponse["categoryid"] = 2;
-                jsonResponse["commanderid"] = robotId - 100;
-                jsonResponse["robotid"] = robotId;
-                jsonResponse["accesskey"] = document.getElementById("AccessKey").value;
-                jsonResponse["message"] = jsonObject.message;
-                var jsonString = JSON.stringify(jsonResponse);
-                connection.invoke("XSignal", jsonString);
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 22) {
-                reviewProcess(jsonObject);
-
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 6 && jsonObject.commanderid == 0) {
-                //authentication success
-                document.getElementById("LoginConfirm").innerText = jsonObject.message;
-                document.getElementById("AccessKey").disabled = true;
-                document.getElementById("XSubmit").disabled = true;
-                isSignalRConnection = true;
-                //technique for temporary emphasis
-                document.getElementById("LoginConfirm").style.backgroundColor = "yellow";
-                document.getElementById("LoginConfirm").style.fontWeight = "bold";
-                window.setTimeout(timeoutLoginDisplay, 1200);
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 6) {
-                document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " connected.";
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 5) {
-                document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " monitoring.";
-                document.getElementById("MonitorDetail").style.display = "block";
-                remoteCapture();
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 2) {
-                //robot sends data to commander, in this case the message is the URL for the newly captured image:
-                if (jsonObject.commanderid == commanderId) {
-                    //2019-01-01 JPC manage switching display viewable/not viewable
-                    if (document.getElementById("MonitorDetail").style.display == "block") {
-                        document.getElementById("imgMonitor").src = jsonObject.message;
-                        document.getElementById("Monitor").innerText = "Image received from Camera " + jsonObject.commanderid + " at " + xgetTime();
-                    }
-                }
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 1) {
-                //commander sends data to robot
-                if (jsonObject.robotid == robotId) {
-                    if (jsonObject.message == "capture" && !isSendingLock) {
-                        workingOverrideTimeout = 0;
-                    }
-                }
-            } else {
-                alert(response + "ERROR: Data from server is badly formatted or otherwise not making sense.")
-            }
-            if (debug) DebugDisplay(response);
-        }
-
-        function timeoutLoginDisplay() {
-            document.getElementById("LoginConfirm").style.backgroundColor = "transparent";
-            document.getElementById("LoginConfirm").style.fontWeight = "normal";
-        }
-
-        function DebugDisplay(response) {
-            document.getElementById("DebugDisplay").innerText = response;
-            document.getElementById("DebugDisplay").style.backgroundColor = "yellow";
-            document.getElementById("DebugDisplay").style.fontWeight = "bold";
-            window.setTimeout(timeoutDebugDisplay, 1200);
-        }
-
-        function timeoutDebugDisplay() {
-            document.getElementById("DebugDisplay").style.backgroundColor = "transparent";
-            document.getElementById("DebugDisplay").style.fontWeight = "normal";
-        }
-        //---------------------------------------------------
-        //Login - authentication
-        function xstart() {
-            //Example registration - "robot" device gets started with "categoryid":6
-            // { "categoryid": 6, "commanderid": 0, "robotid": 100, "accesskey": "demo-access-key" }
-            var jsonObject = new Object();
-            jsonObject["categoryid"] = 6;
-            jsonObject["commanderid"] = commanderId;
-            jsonObject["robotid"] = commanderId + 100;
-            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
-
-            var jsonString = JSON.stringify(jsonObject);
-            connection.invoke("XSignal", jsonString);
-        }
-
-    </script>
-
-    <script>
-        //WebPageCam camera handler
-        function wstart() {
-            xvideo = document.getElementById('xcam');
-            xcanvas = document.getElementById('xmotion');
-
-            //Initialise the DiffCamEngine libary for image capture
-            //2018-12-21 JPC TODO sort out facingCamera for desktops - now not working
-            DiffCamEngine.init(
-                {
-                    scoreThreshold: 100,
-                    imageMimeType: "image/jpeg",
-                    jpegQuality: 0.3,
-                    facingCamera: "default",
-                    captureWidth: 800,
-                    captureHeight: 800,
-                    //2018-12-26 JPC increase captureIntervalTime from 100ms
-                    captureIntervalTime: 200,
-                    video: xvideo,
-                    motionCanvas: xcanvas,
-                    initSuccessCallback: initSuccess,
-                    initErrorCallback: initError,
-                    captureCallback: xcapture
-                });
-
-            robotId = parseInt(document.getElementById("CameraNumber").value) + 100;
-            var jsonObject = new Object();
-            jsonObject["categoryid"] = 6;
-            jsonObject["commanderid"] = robotId - 100;
-            jsonObject["robotid"] = robotId;
-            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
-
-            var jsonString = JSON.stringify(jsonObject);
-            connection.invoke("XSignal", jsonString);
-        }
-
-        function initSuccess() {
-            DiffCamEngine.start();
-        }
-
-        function initError() {
-            alert('Error on camera initialisation');
-        }
-
-        function xcapture(payload) {
-            var timeStart = (new Date()).getTime();
-            if (timeStart > lockTimeStart + lockTimeout) {
-                isSendingLock = false;
-            }
-            var isCaptureOverride = false;
-            if (timeStart >= lockTimeStart + workingOverrideTimeout - 1000 && !isSendingLock) {
-                isCaptureOverride = true;
-                workingOverrideTimeout = overrideTimeout;
-            }
-            if (isSendingLock) return;
-
-            //2018-12-26 JPC trigger override capture on long timeout
-            if (payload.hasMotion || isCaptureOverride) {
-                try {
-                    var request = payload.getURL();
-                    var requestCheck = request.slice(0, 307);
-                    //document.getElementById("Monitor").innerText = request.length + " ..." + requestCheck.slice(75, 100) + "...";
-
-                    var formData = new FormData();
-                    formData.append("CameraNumber", document.getElementById("CameraNumber").value);
-                    formData.append("AccessKey", document.getElementById("AccessKey").value);
-                    //2018-12-16 JPC change from image/png to image/jpeg means that we need slice(headerLength) rather than slice(23) or slice(22)
-                    headerLength = requestCheck.indexOf(";base64,") + 8;
-                    formData.append("ImageBase64", request.slice(headerLength));
-
-                    //2018-12-15 JPC allow for use of an application folder that is a child of a website
-                    //website is "/", child application is "/rm/"
-                    var requestString = appPath() + "Home/ImagePost";
-                    var oeWebPageCamInfo = document.getElementById("WebPageCamInfo");
-                    if (isCaptureOverride) {
-                        oeWebPageCamInfo.innerText = "Override ";
-                    } else {
-                        oeWebPageCamInfo.innerText = "Sending ";
-                    }
-                    oeWebPageCamInfo.innerText += request.length + " chars "; 
-                    if(debug) oeWebPageCamInfo.innerText += "..." + requestCheck.slice(300, 307) + "..."
-                    oeWebPageCamInfo.innerText += " at " + xgetTime();
-                    if(debug) oeWebPageCamInfo.innerText += " to " + requestString;
-                    //throw new Error("Test error");
-
-                    xmlhttp.open("POST", requestString, true);
-                    //xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                    isSendingLock = true;
-                    xmlhttp.send(formData);
-                    //2018-12-26 JPC timeout for unlock
-                    lockTimeStart = timeStart;
-                } catch (ex) {
-                    document.getElementById("Monitor").innerText = "ERROR in capture processing: " + ex.message;
-                }
-            }
-        }
-
-    </script>
-
-    <script>
-        //Monitor handler
-        function mstart() {
-            commanderId = parseInt(document.getElementById("CameraNumberMonitor").value);
-            var jsonObject = new Object();
-            jsonObject["categoryid"] = 5;
-            jsonObject["commanderid"] = commanderId;
-            jsonObject["robotid"] = commanderId + 100;
-            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
-
-            var jsonString = JSON.stringify(jsonObject);
-            connection.invoke("XSignal", jsonString);
-        }
-
-        function remoteCapture() {
-            var jsonObject = new Object();
-            jsonObject["categoryid"] = 1; //human commander controls "robot" = camera in this case
-            jsonObject["commanderid"] = commanderId;
-            jsonObject["robotid"] = commanderId + 100;
-            jsonObject["accesskey"] = document.getElementById("AccessKey").value;
-            jsonObject["message"] = "capture";
-            var jsonString = JSON.stringify(jsonObject);
-            connection.invoke("XSignal", jsonString);
-        }
-
-        function viewMonitor() {
-            document.getElementById("MonitorDisplay").style.display = "block";
-            document.getElementById("ReviewDisplay").style.display = "none";
-            document.getElementById("ViewMonitor").style.backgroundColor = "rgb(255, 255, 180)";
-            document.getElementById("ViewReview").style.backgroundColor = "lightgrey";
-        }
-
-        function viewReview() {
-            document.getElementById("MonitorDisplay").style.display = "none";
-            document.getElementById("ReviewDisplay").style.display = "block";
-            document.getElementById("ViewMonitor").style.backgroundColor = "lightgrey";
-            document.getElementById("ViewReview").style.backgroundColor = "rgb(255, 255, 180)";
-
-            if (document.getElementById("DateFolders").childElementCount == 0) {
-                var formData = new FormData();
-                formData.append("AccessKey", document.getElementById("AccessKey").value);
-                formData.append("DateFolder", "none");
-                formData.append("CameraFolder", "none");
-                var requestString = appPath() + "Home/ImageList";
-                xmlhttp.open("POST", requestString, true);
-                isSendingLock = true;
-                xmlhttp.send(formData);
-                //2018-12-26 JPC timeout for unlock
-                lockTimeStart = (new Date()).getTime();
-            }
-        }
-
-        function folderChange(oeFolder) {
-            var formData = new FormData();
-            formData.append("AccessKey", document.getElementById("AccessKey").value);
-            if (oeFolder.id == "DateFolders") {
-                formData.append("DateFolder", oeFolder.value);
-                formData.append("CameraFolder", "none");
-            } else {
-                formData.append("DateFolder", document.getElementById("DateFolders").value);
-                formData.append("CameraFolder", oeFolder.value);
-            }
-            var requestString = appPath() + "Home/ImageList";
-            xmlhttp.open("POST", requestString, true);
-            isSendingLock = true;
-            xmlhttp.send(formData);
-            //2018-12-26 JPC timeout for unlock
-            lockTimeStart = (new Date()).getTime();
-        }
-
-        function reviewProcess(jsonObject) {
-            var level = jsonObject.message.split("/").length;
-            var gen = "";
-            if (level <= 2) {
-                //list is of folder names
-                for (i = 0; i < jsonObject.xdata.length; i++) {
-                    gen += "<option value=\"" + jsonObject.xdata[i] + "\">" + jsonObject.xdata[i] + "</option>";
-                }
-                if (level == 1) {
-                    document.getElementById("DateFolders").innerHTML = gen;
-                    document.getElementById("CameraFolders").innerHTML = "";
-                } else {
-                    document.getElementById("CameraFolders").innerHTML = gen;
-                }
-                document.getElementById("Images").innerHTML = "";
-            } else {
-                //list is of file names
-                var path = "modet"
-                    + "/" + document.getElementById("DateFolders").value
-                    + "/" + document.getElementById("CameraFolders").value + "/";
-                for (i = 0; i < jsonObject.xdata.length; i++) {
-                    gen += "<div style=\"padding-left:10px;padding-bottom:20px;float:left\">"
-                        + "<img src =\"" + path + jsonObject.xdata[i] + "\" "
-                        + "style=\"width:220px;\" /><br />"
-                        + "<a href=\"" + path + jsonObject.xdata[i] + "\" target=\"_blank\">"
-                        + jsonObject.xdata[i].replace("-", ":").replace("-", ":").replace(".jpg", "")  + "</a></div>";
-                    //bandwidth limit on image display
-                    if (i == 399) {
-                        document.getElementById("ReviewHeader").innerHTML
-                            = "There are " + jsonObject.xdata.length + " images in this folder. The most recent " + (i+1).toString() + " are displayed. Use server access methods like RDC or FTPS to see all.";
-                        break;
-                    }
-                    if (i == jsonObject.xdata.length - 1) {
-                        document.getElementById("ReviewHeader").innerHTML
-                            = "There are " + jsonObject.xdata.length + " images in this folder.";
-                    }
-                }
-                document.getElementById("Images").innerHTML =  gen + "<div style=\"clear:both\">&nbsp;</div>";
-            }
-
-        }
-
-        function reviewRefresh() {
-            //single refresh button
-            //check first that the Cameras listbox is populated
-            if (document.getElementById("CameraFolders").innerHTML.indexOf("<option") > -1) {
-                folderChange(document.getElementById('CameraFolders'));
-            } else {
-                alert("Select Date and Camera Number to view images.");
-            }
-        }
-
-
-    </script>
-
-    <script>
-        //Utility functions
-        function appPath() {
-            //typical value of location.href is
-            // "https://www.example.com/m249872/index.html"
-            //split on "/" gives length = 5 and .split[3] as the virtual directory value
-            var pathElements = location.href.split("/");
-            if (pathElements.length == 4) {
-                return "/";
-            } else {
-                return "/" + pathElements[3] + "/";
-            }
-        }
-
-        function xgetTime() {
-            var d = new Date();
-            var hours = ("00" + d.getHours()).slice(-2);
-            var minutes = ("00" + d.getMinutes()).slice(-2);
-            var seconds = ("00" + d.getSeconds()).slice(-2);
-            var milliseconds = (d.getMilliseconds() + "000").slice(2);
-            nowTime = hours + ":" + minutes + ":" + seconds + "." + milliseconds;
-            return nowTime;
-        }
-
-    </script>
 
 </body>
 </html >

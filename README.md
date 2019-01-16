@@ -1,4 +1,4 @@
-# XMRemoteMonitor Version 0.8 Beta
+# XMRemoteMonitor Version 0.8.1 Beta
 A web app that enables Android smart phones and some other devices to act as remote monitoring cameras capturing images on motion detection.
 Scenarios include:
 - Security Camera
@@ -38,11 +38,3 @@ Why not simply go to a shop and buy security cameras? How does this app compete?
 "XMRemoteMonitor" is a spinoff from "XMRemoteRobot":  
 [https://github.com/manukautech/XMRemoteRobot](https://github.com/manukautech/XMRemoteRobot)
 
-
-
-
-
-
-
-
- 
