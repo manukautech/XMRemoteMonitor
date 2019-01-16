@@ -8,10 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="wwwroot\images\MotionDetected\**" />
-    <Content Remove="wwwroot\images\MotionDetected\**" />
-    <EmbeddedResource Remove="wwwroot\images\MotionDetected\**" />
-    <None Remove="wwwroot\images\MotionDetected\**" />
+    <Compile Remove="wwwroot\images\**" />
+    <Content Remove="wwwroot\images\**" />
+    <EmbeddedResource Remove="wwwroot\images\**" />
+    <None Remove="wwwroot\images\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,12 +31,6 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\images\" />
-    <Folder Include="wwwroot\modet\2018-12-13\1\" />
-    <Folder Include="wwwroot\modet\2018-12-15\1\" />
   </ItemGroup>
 
 </Project>
