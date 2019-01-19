@@ -18,7 +18,7 @@ Quickest first test is to run in Visual Studio on a computer with a webcam. Run 
 
 XMRemoteMonitor hosting has so far been tested on an Amazon Lightsail Windows 2016 virtual machine server.  
 We expect XMRemoteMonitor to also host well on Microsoft Azure shared hosting web apps - todo test this.
-XMRemoteMonitor writes captured photos to a folder named "modet" (motion detection). You need to make sure that this folder has write permissions for the IUSR (Internet Users) system account.
+XMRemoteMonitor writes captured photos to a folder named "modet" (motion detection). You need to make sure that this folder has write permissions for the IIS_IUSRS (Internet Users) system account.
 
 Current issues include:  
 - Power supply for environments without mains power. We are working on combinations of additional batteries and solar panels.
