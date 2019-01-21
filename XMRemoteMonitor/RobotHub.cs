@@ -30,7 +30,7 @@ namespace XMRemoteMonitor
             _env = env;
         }
 
-        
+
         //20180717 JPC start with simplest working system
         //Extend later into control of trials online with access for limited time
 
@@ -68,6 +68,7 @@ namespace XMRemoteMonitor
             int categoryId = (int)requestObject.SelectToken("categoryid");
             int commanderId = (int)requestObject.SelectToken("commanderid");
             int robotId = (int)requestObject.SelectToken("robotid");
+            string message = (string)requestObject.SelectToken("message");
 
             //map recipient id to generated signalr Client Id
             int recipientId = 0;
@@ -84,15 +85,15 @@ namespace XMRemoteMonitor
                 case 3:
                     //Telemetry for storage in the database on this server
                     break;
-                case 4: //register a demo commander
+                case 4: //register a commander with auto channel number allocation
                 case 5: //register a commander
                 case 6: //register a robot
-                    if(categoryId == 4) { 
+                    if (categoryId == 4) {
                         //Demo Commander needs a temporary id between 10 and 99
                         //Demo Robot will be this id plus 100
-                        for(int i = 10; i <= 100; i++)
+                        for (int i = 10; i <= 100; i++)
                         {
-                            if(!CommsManager.ClientMap.ContainsKey(i))
+                            if (!CommsManager.ClientMap.ContainsKey(i))
                             {
                                 if (i < 100)
                                 {
@@ -115,11 +116,29 @@ namespace XMRemoteMonitor
                     int senderId = commanderId;
                     if (categoryId == 6) senderId = robotId;
                     if (CommsManager.ClientMap.ContainsKey(senderId))
-                    {
-                        CommsManager.ClientMap.Remove(senderId);
+                    { 
+                        //2019-01-19 JPC use message as flag for taking channel number ownership
+                        //Note that channel 0 is used for initial connection testing by all clients
+                        if (message == "takeover" || commanderId == 0)
+                        {
+                            CommsManager.ClientMap.Remove(senderId);
+                        }
+                        else if(CommsManager.ClientMap[senderId] == userId)
+                        {
+                            response = "{\"categoryid\":" + categoryId + ",\"commanderid\":" + commanderId + ",\"robotid\":" + robotId 
+                            + ", \"issuccess\":false, \"message\":\"You are already registered to use this channel. You do not need to request it again\"}";
+                            await Clients.Caller.SendAsync("XSignal", response);
+                            return;
+                        }
+                        else
+                        {
+                            response = "{\"categoryid\":" + categoryId + ",\"commanderid\":0, \"issuccess\":false, \"message\":\"This channel is already registered. You can select another channel or request a takeover of this one.\"}";
+                            await Clients.Caller.SendAsync("XSignal", response);
+                            return;
+                        }
                     }
                     CommsManager.ClientMap.Add(senderId, userId);
-                    response = "{\"categoryid\":" + categoryId  
+                    response = "{\"categoryid\":" + categoryId
                         + ",\"commanderid\":" + commanderId + ",\"robotid\":" + robotId
                         + ", \"issuccess\":true, \"message\":\"SignalR connection is ready.\"}";
                     await Clients.Caller.SendAsync("XSignal", response);
@@ -127,7 +146,7 @@ namespace XMRemoteMonitor
                 default:
                     response = "{\"issuccess\":false, \"message\":\"Error: this message has an unrecognised categoryid = "
                         + categoryId
-                        + ". We currently support values of 1 for command, 2 for robot reporting to commander, 3 for telemetry, 4 for demo commander registration, 5 for commander registration, 6 for robot registration \" }";                           
+                        + ". We currently support values of 1 for command, 2 for robot reporting to commander, 3 for telemetry, 4 for demo commander registration, 5 for commander registration, 6 for robot registration \" }";
                     await Clients.Caller.SendAsync("XSignal", response);
                     return;
             }
