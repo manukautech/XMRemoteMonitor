@@ -146,6 +146,10 @@
             var jsonObject = JSON.parse(signal);
             if (signal.indexOf("issuccess") > -1 && !jsonObject.issuccess) {
                 alert(jsonObject.message);
+                if (jsonObject.categoryid && jsonObject.categoryid == 6 && jsonObject.message.indexOf("takeover") > -1) {
+                    //if a channel is not available, display the takeover button
+                    document.getElementById("Takeover").style.display = "inline";
+                }
             } else if (jsonObject.categoryid && jsonObject.categoryid == 20) {
                 //Response to GetSettings
                 if (jsonObject.debug) debug = true;
@@ -165,18 +169,21 @@
             } else if (jsonObject.categoryid && jsonObject.categoryid == 22) {
                 reviewProcess(jsonObject);
 
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 6 && jsonObject.commanderid == 0) {
-                //authentication success
+            } else if (jsonObject.categoryid && jsonObject.commanderid == 0 && jsonObject.categoryid == 6) {
+                //initial authentication and comms test success
                 document.getElementById("LoginConfirm").innerText = jsonObject.message;
                 document.getElementById("AccessKey").disabled = true;
                 document.getElementById("XSubmit").disabled = true;
                 isSignalRConnection = true;
-                //technique for temporary emphasis
+                //technique for highlighting the confirmation message for 1.2 seconds
                 document.getElementById("LoginConfirm").style.backgroundColor = "yellow";
                 document.getElementById("LoginConfirm").style.fontWeight = "bold";
                 window.setTimeout(timeoutLoginDisplay, 1200);
             } else if (jsonObject.categoryid && jsonObject.categoryid == 6) {
+                //camera channel registration success
                 document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " connected.";
+                //start diff-cam-engine-xjpc on passing this test
+                diffCamInit();
             } else if (jsonObject.categoryid && jsonObject.categoryid == 5) {
                 document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " monitoring.";
                 document.getElementById("MonitorDetail").style.display = "block";
@@ -238,19 +245,25 @@
 
     <script>
         //WebPageCam camera handler
-        function wstart() {
-            //Initialise the DiffCamEngine libary for image capture
-            DiffCamEngine.init(diffCamOptions);
-
+        function wstart(message) {
+            //message values are "request" or "takeover" as in 
+            //request a channel number or force a takeover of a channel number
             robotId = parseInt(document.getElementById("CameraNumber").value) + 100;
             var jsonObject = new Object();
             jsonObject["categoryid"] = 6;
             jsonObject["commanderid"] = robotId - 100;
             jsonObject["robotid"] = robotId;
+            jsonObject["message"] = message;
             jsonObject["accesskey"] = document.getElementById("AccessKey").value;
 
             var signal = JSON.stringify(jsonObject);
             connection.invoke("XSignal", signal);
+        }
+
+        function diffCamInit() {
+            //Initialise the DiffCamEngine libary for image capture 
+            //after function wstart() above passes communication channel check
+            DiffCamEngine.init(diffCamOptions);
         }
 
         function initSuccess() {
@@ -501,14 +514,15 @@
 
             <div id="pageWebPageCam" class="xpage" style="display:none">
                 Camera number:
-                <select id="CameraNumber">
+                <select id="CameraNumber" onchange="document.getElementById('Takeover').style.display = 'none';">
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
                     <option value="5">5</option>
                 </select>
-                <button onclick="wstart();">Start</button>
+                <button onclick="wstart('request');">Request</button>&nbsp;
+                <button id="Takeover" onclick="wstart('takeover');" style="display:none; background-color:yellow">Takeover</button>
                 <br />
                 <video id="xcam" muted autoplay style="width:60%;max-width:640px;"></video>
                 <canvas id="xmotion" width="0" height="0"></canvas>
