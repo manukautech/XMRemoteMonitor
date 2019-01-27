@@ -1,11 +1,12 @@
-# XMRemoteMonitor Version 0.8.2 Beta
+# XMRemoteMonitor Version 0.9.0 Beta
 A web app that enables Android smart phones and some other devices to act as remote monitoring cameras capturing images on motion detection.
 Scenarios include:
 - Security Camera
 - Watching bird sanctuaries to study rat and other pest behaviours
 
-Easiest use is on devices which can run an HTML5-capable browser which continues to run when the screen is locked. For Android smart phones this usually means installing and using FireFox. We find that we cannot install FireFox on some low cost phones but we have had success with coding an app for them based on the same HTML and JavaScript packaged with "Droidscript". The basic Droidscript is free from Google Play.  
-- Issue - 19 Jan 2019 - Firefox-on-Android is now crashing this app after 5 to 15 min of operations. Intense detective is currently happening. See Issue 1-2 for more details.
+Easiest use is on devices which can run an HTML5-capable browser which continues to run when the screen is locked. For Android smart phones this usually means installing and using FireFox. We find that this web app client option needs recent design well resourced phones to run reliably - ref Issue 1.2:  
+[https://github.com/manukautech/XMRemoteMonitor/issues/3](https://github.com/manukautech/XMRemoteMonitor/issues/3)
+We have therefore coded an app for them which runs in the "Droidscript" environment. The basic Droidscript is free from Google Play. The oldest device tested as running this app has Android 4.0.4  
 
 This XMRemoteMonitor download has a placeholder "Access Key" of "111111",
 Edit "appSettings.json" to change this. 
