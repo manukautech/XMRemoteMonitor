@@ -1,10 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <link href="css/site.css" rel="stylesheet" />
 
     <!--2019-01-08 move all scripting to the head section so that code most subject 
     to configuration appears first-->
+    <script src="js/adapter.js"></script>
     <script src="js/signalr.min.js"></script>
     <script src="js/diff-cam-engine-xjpc.js"></script>
 
@@ -14,7 +15,7 @@
         var lockTimeStart = (new Date()).getTime();
         var lockTimeout = 30000; //30 seconds
         //2018-12-26 JPC trigger override capture without motion detection on long timeout
-        var overrideTimeout = 900000; //900 seconds ie 15 min
+        var overrideTimeout = 900000; // temp 90 seconds //900 seconds ie 15 min
         var workingOverrideTimeout = overrideTimeout;
         //var isAJAXNav = false; // -- possible future use for loading page panels from separate files by AJAX
 
@@ -36,17 +37,13 @@
         //https://www.w3schools.com/js/js_ajax_http.asp
         var xmlhttp = new XMLHttpRequest();
 
-        //2019-01-09 JPC have a placeholder image for use when camera is scheduled off 
-        //    but still needs to run to keep the session alive.
-        var placeholderBase64 = "";
-
         //Scheduled active from 7pm to 6:30am on weekdays plus all weekend
         //'return true' effect is to capture images on motion detection
         //'return false' effect is to NOT capture images on motion detection
         //.. but do take a "keep session alive" photo every 15 min.
         function scheduledActive() {
             //uncomment next statement "return true;" to switch off scheduling
-            return true;
+            //return true;
 
             var d = new Date();
             //Remain active through the weekend
@@ -104,8 +101,7 @@
 
             if (!hasReadSettings) {
                 //Read the app setting from an AJAX call to server-side
-                //html-based rather than MVC-cshtml-based makes path management easier
-                requestURL = "Home/GetSettings";
+                requestURL = appPath() + "Home/GetSettings";
                 xmlhttp.open("GET", requestURL, true);
                 //xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 isSendingLock = true;
@@ -153,7 +149,8 @@
             } else if (jsonObject.categoryid && jsonObject.categoryid == 20) {
                 //Response to GetSettings
                 if (jsonObject.debug) debug = true;
-                placeholderBase64 = jsonObject.xdata[0];
+                //2019-01-27 JPC replaced placeholderBase64 data with an options flag
+                //placeholderBase64 = jsonObject.xdata[0];
                 document.getElementById("Monitor").innerText = "AJAX connection is ready.";
                 hasReadSettings = true;
             } else if (jsonObject.categoryid && jsonObject.categoryid == 21) {
@@ -292,24 +289,24 @@
             //2018-12-26 JPC trigger override capture on long timeout
             if (payload.hasMotion || isCaptureOverride) {
                 try {
-                    var request
+                    var request;
+                    var options;
                     if (scheduledActive()) {
                         request = payload.getURL();
+                        //handle the jpeg or png prefix section
+                        var headerLength = request.indexOf(";base64,") + 8;
+                        request = request.slice(headerLength);
+                        options = "base64";
                     } else {
-                        request = placeholderBase64;
+                        request = "";
+                        options = "placeholder";
                     }
-                    var requestCheck = request.slice(0, 307);
-                    //document.getElementById("Monitor").innerText = request.length + " ..." + requestCheck.slice(75, 100) + "...";
-
                     var formData = new FormData();
                     formData.append("CameraNumber", document.getElementById("CameraNumber").value);
                     formData.append("AccessKey", document.getElementById("AccessKey").value);
-                    //2018-12-16 JPC change from image/png to image/jpeg means that we need slice(headerLength) rather than slice(23) or slice(22)
-                    headerLength = requestCheck.indexOf(";base64,") + 8;
-                    formData.append("ImageBase64", request.slice(headerLength));
+                    formData.append("ImageBase64", request);
+                    formData.append("Options", options);
 
-                    //2018-12-15 JPC allow for use of an application folder that is a child of a website
-                    //website is "/", child application is "/rm/"
                     var requestString = appPath() + "Home/ImagePost";
                     var oeWebPageCamInfo = document.getElementById("WebPageCamInfo");
                     if (isCaptureOverride) {
@@ -318,7 +315,7 @@
                         oeWebPageCamInfo.innerText = "Sending ";
                     }
                     oeWebPageCamInfo.innerText += request.length + " chars ";
-                    if (debug) oeWebPageCamInfo.innerText += "..." + requestCheck.slice(300, 307) + "..."
+                    if (debug) oeWebPageCamInfo.innerText += "..." + request.slice(300, 307) + "..."
                     oeWebPageCamInfo.innerText += " at " + xgetTime();
                     if (debug) oeWebPageCamInfo.innerText += " to " + requestString;
                     //throw new Error("Test error");
@@ -346,6 +343,8 @@
             jsonObject["commanderid"] = commanderId;
             jsonObject["robotid"] = commanderId + 100;
             jsonObject["accesskey"] = document.getElementById("AccessKey").value;
+            //2019-01-24 JPC the one operator in this system will always own command of any camera channel
+            jsonObject["message"] = "takeover";
 
             var signal = JSON.stringify(jsonObject);
             connection.invoke("XSignal", signal);
@@ -524,7 +523,8 @@
                 <button onclick="wstart('request');">Request</button>&nbsp;
                 <button id="Takeover" onclick="wstart('takeover');" style="display:none; background-color:yellow">Takeover</button>
                 <br />
-                <video id="xcam" muted autoplay style="width:60%;max-width:640px;"></video>
+                <!--2019-01-23 JPC reduce video preview width from 60% to 30%-->
+                <video id="xcam" muted autoplay style="width:30%;max-width:640px;"></video>
                 <canvas id="xmotion" width="0" height="0"></canvas>
                 <br />
                 <pre id="WebPageCamInfo"></pre>
@@ -601,7 +601,7 @@
                 </address>
 
                 <p>
-                    Copyright © 2018 John Calder as Project Leader.<br />
+                    Copyright � 2018 John Calder as Project Leader.<br />
                     XMRemoteMonitor software, and related camera designs published with it, is an "Open Source" project. We apply the Apache Licence:<br />
                     http://www.apache.org/licenses/LICENSE-2.0
                     <br /><br />
@@ -614,6 +614,7 @@
 
                 <p>
                     This is an output from research, teaching and learning at the Manukau Institute of Technology, Auckland, New Zealand
+                    Students making significant contributions to "XMRemoteMonitor": Amber Baker, Sadia Afrin.
                 </p>
             </div>
 
