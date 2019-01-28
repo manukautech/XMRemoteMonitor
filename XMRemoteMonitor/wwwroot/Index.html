@@ -475,13 +475,14 @@
             }
         }
 
+        //Returns local time in format HH:mm:ss.ss example 21:03:16.81
         function xgetTime() {
             var d = new Date();
             var hours = ("00" + d.getHours()).slice(-2);
             var minutes = ("00" + d.getMinutes()).slice(-2);
             var seconds = ("00" + d.getSeconds()).slice(-2);
-            var milliseconds = (d.getMilliseconds() + "000").slice(2);
-            nowTime = hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+            var decimalSeconds = ("000" + d.getMilliseconds()).slice(-3).slice(2);
+            nowTime = hours + ":" + minutes + ":" + seconds + "." + decimalSeconds;
             return nowTime;
         }
 
@@ -601,7 +602,7 @@
                 </address>
 
                 <p>
-                    Copyright © 2018 John Calder as Project Leader.<br />
+                    Copyright Â© 2018 John Calder as Project Leader.<br />
                     XMRemoteMonitor software, and related camera designs published with it, is an "Open Source" project. We apply the Apache Licence:<br />
                     http://www.apache.org/licenses/LICENSE-2.0
                     <br /><br />
