@@ -65,13 +65,41 @@ namespace XMRemoteMonitor.Controllers
                 method = "GetSettings",
                 issuccess = true,
                 debug = _debug,
-                xdata = imgBase64
+                xdata = imgBase64,
+                message = "Server Connection OK"
             };
             //2019-01-16 apply our new convention of "signal" as the keyword for a package of metadata and data in json string format
             string signal = JsonConvert.SerializeObject(response);
             return signal;
             //Previous version had low level code which looked like this example
             //string json = "{\"categoryid\":20, \"method\":\"GetSettings\", \"issuccess\":true, \"debug\":" + _debug + "}";
+        }
+
+        //2019-01-30 JPC special case of GetSettings incorporating Auth 
+        //for clients that do not support SignalR eg some mobile apps.
+        [HttpPost]
+        public string GetSettingsAuth(string AccessKey)
+        {
+            ResponseAJAX response = new ResponseAJAX();
+            //new categoryid = 23 is alternative to 20 above
+            response.categoryid = 23;
+            response.method = "GetSettingsAuth";
+            response.debug = _debug;
+
+            //AccessKey check
+            if (AccessKey == _appAccessKey)
+            {
+                response.issuccess = true;
+                response.message = "Access Key confirmed.";
+            }
+            else
+            {
+                //Authentication fail
+                response.issuccess = false;
+                response.message = "Needs Access Key.";
+            }
+            string signal = JsonConvert.SerializeObject(response);
+            return signal;
         }
 
         [HttpPost]
