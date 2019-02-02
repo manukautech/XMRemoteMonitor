@@ -50,14 +50,11 @@ namespace XMRemoteMonitor.Controllers
 
        
         //AJAX follow SignalR established convention of categoryid integer values 
-        //for the category of action, starting at 20 = getsettings
-        [HttpGet]
-        public string GetSettings()
+        //starting at 20 = GetSettings
+        //2019-02-01 Add parameters for variety of startup scenarios. Change from [HttpGet] to [HttpPost]
+        [HttpPost]
+        public string GetSettings(bool IsImageDownload = true, bool IsAuth = false, string AccessKey = "")
         {
-            //2019-01-27 JPC the sending of placeholder data is now only for backward compatibility
-            //method ImagePost below now handles this task all on the server in response to an options flag
-            List<string> imgBase64 = new List<string>();
-            imgBase64.Add(System.IO.File.ReadAllText(_env.WebRootPath + "\\res\\PlaceholderBase64.txt"));
 
             ResponseAJAX response = new ResponseAJAX()
             {
@@ -65,42 +62,43 @@ namespace XMRemoteMonitor.Controllers
                 method = "GetSettings",
                 issuccess = true,
                 debug = _debug,
-                xdata = imgBase64,
                 message = "Server Connection OK"
             };
-            //2019-01-16 apply our new convention of "signal" as the keyword for a package of metadata and data in json string format
-            string signal = JsonConvert.SerializeObject(response);
-            return signal;
-            //Previous version had low level code which looked like this example
-            //string json = "{\"categoryid\":20, \"method\":\"GetSettings\", \"issuccess\":true, \"debug\":" + _debug + "}";
-        }
-
-        //2019-01-30 JPC special case of GetSettings incorporating Auth 
-        //for clients that do not support SignalR eg some mobile apps.
-        [HttpPost]
-        public string GetSettingsAuth(string AccessKey)
-        {
-            ResponseAJAX response = new ResponseAJAX();
-            //new categoryid = 23 is alternative to 20 above
-            response.categoryid = 23;
-            response.method = "GetSettingsAuth";
-            response.debug = _debug;
 
             //AccessKey check
-            if (AccessKey == _appAccessKey)
+            if (IsAuth && AccessKey == _appAccessKey)
             {
                 response.issuccess = true;
                 response.message = "Access Key confirmed.";
             }
-            else
+            else if(IsAuth)
             {
                 //Authentication fail
                 response.issuccess = false;
                 response.message = "Needs Access Key.";
             }
+
+            if (IsImageDownload)
+            {
+                //2019-01-27 JPC sending placeholder image data is now only for client apps that may save it locally
+                //Method ImagePost below now handles saving placeholders on the server in response to an options flag
+                List<string> imgBase64 = new List<string>();
+                imgBase64.Add(System.IO.File.ReadAllText(_env.WebRootPath + "\\res\\PlaceholderBase64.txt"));
+                response.xdata = imgBase64;
+            }
+            //2019-01-16 apply our new convention of "signal" as the keyword for a package of metadata and data in json string format
             string signal = JsonConvert.SerializeObject(response);
             return signal;
         }
+
+        //2019-02-02 JPC ver 0.9 For backwards compatibility with ver 0.8 e.g. to support test cameras 
+        //out in the field running local apps that will take time get to for updates
+        [HttpGet]
+        public string GetSettings()
+        {
+            return GetSettings(true, false, "");
+        }
+
 
         [HttpPost]
         public string ImagePost(string CameraNumber, string AccessKey, string ImageBase64, string options = "base64")
