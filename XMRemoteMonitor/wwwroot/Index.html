@@ -43,7 +43,7 @@
         //.. but do take a "keep session alive" photo every 15 min.
         function scheduledActive() {
             //uncomment next statement "return true;" to switch off scheduling
-            //return true;
+            return true;
 
             var d = new Date();
             //Remain active through the weekend
@@ -102,7 +102,7 @@
             if (!hasReadSettings) {
                 //Read the app setting from an AJAX call to server-side
                 requestURL = appPath() + "Home/GetSettings";
-                xmlhttp.open("GET", requestURL, true);
+                xmlhttp.open("POST", requestURL, true);
                 //xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 isSendingLock = true;
                 xmlhttp.send();
