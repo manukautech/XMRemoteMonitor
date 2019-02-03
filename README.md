@@ -23,15 +23,14 @@ Test-run XMRemoteMonitor on a Windows machine with Visual Studio 2017 installed.
 [https://www.microsoft.com/net/download/core](https://www.microsoft.com/net/download/core)  
 If you are running the full IIS Webserver on your test machine, you will also need to download and install ".NET Core Runtime".  
 
-Quickest first test is to run in Visual Studio on a computer with a webcam. Run in 2 windows: select "WebPageCam" in one and "Monitor" in the other.
+Quickest first test is to run in Visual Studio on a computer with a webcam. Run in 2 windows: select "WebPageCam" in one and "Monitor" in the other. Except for running in "Firefox" where you only need 1 window because the "WebPageCam" keeps going when you switch to "Monitor".
 
 XMRemoteMonitor hosting has so far been tested on an Amazon Lightsail Windows 2016 virtual machine server.  
 We expect XMRemoteMonitor to also host well on Microsoft Azure shared hosting web apps - todo test this.
 XMRemoteMonitor writes captured photos to a folder named "modet" (motion detection). You need to make sure that this folder has write permissions for the IIS_IUSRS (Internet Users) system account.
 
 Current issues include:  
-- Power supply for environments without mains power. We are working on combinations of additional batteries and solar panels.
-- Near-real-time Monitor has stopped working on some field tests.  We recommend trying "Monitor" only for short run lab testing.  "Review" gives us reliable remote viewing so stick to "Review" until further notice.  
+- Power supply for environments without mains power. We are working on combinations of additional batteries and solar panels.  
 - Motion Detection in daylight field tests gets a lot of false positives from trees and plants moving in the wind as well as light level changes as clouds move across the sun.  
 - Can smart phone cameras deliver night vision with infra red lighting? Early testing suggests yes but with a question mark over sensitivity.
 - Is infra red lighting the best human intruder management security strategy? Visible light flash may be better.
