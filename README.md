@@ -4,9 +4,11 @@ Scenarios include:
 - Security Camera
 - Watching bird sanctuaries to study rat and other pest behaviours
 
-Easiest use is on devices which can run an HTML5-capable browser which continues to run when the screen is locked. For Android smart phones this usually means installing and using FireFox. We find that this web app client option needs recent design well resourced phones to run reliably - ref Issue 1.2:  
+Easiest use is on devices which can run an HTML5-capable browser which continues to run when the screen is locked. For Android smart phones this usually means installing and using FireFox. We have however run into Firefox crashes on phones with less than 1.5 G of RAM and we have identified this as a bug in Firefox. The Mozilla Foundation has accepted our bug report and is now working on this. Ref:  
+[https://bugzilla.mozilla.org/show_bug.cgi?id=1521760](https://bugzilla.mozilla.org/show_bug.cgi?id=1521760)  
+More about this in our "Issue 1.2" - Ref:  
 [https://github.com/manukautech/XMRemoteMonitor/issues/3](https://github.com/manukautech/XMRemoteMonitor/issues/3)
-We have therefore coded an app for them which runs in the "Droidscript" environment. The basic Droidscript is free from Google Play. The oldest device tested as running this app has Android 4.0.4  
+We have therefore coded a local app which runs in the "Droidscript" environment. The basic Droidscript is free from Google Play. 
 
 This XMRemoteMonitor download has a placeholder "Access Key" of "111111",
 Edit "appSettings.json" to change this. 
