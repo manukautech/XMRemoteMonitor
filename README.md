@@ -20,8 +20,9 @@ e.g. If you own a domain like "example.com" then setup your server to be like "h
 e.g. If you control your own server operating system, usually as a "virtual machine", consider using sub-applications. Then URLs look like this: "https://k37402.example.com/bqigy with another small barrier to hackers but adding on extra barriers is good. 
 Always operate the web app with security SSL certificates installed so your URLs work starting with "https". That sentence can also start "Always operate ANY web app ...". If you use Azure shared hosting this is already provided for you. If you run your own virtual machine you can run with "Let's Encrypt" certificates which are free but you need to renew them every 90 days. The timesaving of a paid service may be worth it for larger scale operations. Ref your hosting service provider.
 
-Test-run  XMRemoteMonitor on a Windows machine with Visual Studio 2017 installed. We use the "Community Edition" which is free of charge for education, individuals and small businesses. Also download and install ".NET Core 2.2 SDK" from:
+Test-run XMRemoteMonitor on a Windows machine with Visual Studio 2017 installed. We use the "Community Edition" which is free of charge for education, individuals and small businesses. Also download and install ".NET Core 2.2 SDK" from:
 [https://www.microsoft.com/net/download/core](https://www.microsoft.com/net/download/core)  
+You will also need this to "build" and "publish" a compiled version for deployment.   
 If you are running the full IIS Webserver on your test machine, you will also need to download and install ".NET Core Runtime".  
 
 Quickest first test is to run in Visual Studio on a computer with a webcam. Run in 2 windows: select "WebPageCam" in one and "Monitor" in the other.
