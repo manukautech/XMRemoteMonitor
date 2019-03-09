@@ -46,6 +46,6 @@ Why not simply go to a shop and buy security cameras? How does this app compete?
 - Smart phones and other HTML-JS-capable devices e.g. Raspberry Pi Zero have advantages for environments without mains electricity. So far all of our field tests have been in such environments.
 - There is a supply on auction sites of smart phones with cracked screens at low prices.  
 
-"XMRemoteMonitor" is a spinoff from "XMRemoteRobot":  
+"XMRemoteMonitor" has some similarities to "XMRemoteRobot":  
 [https://github.com/manukautech/XMRemoteRobot](https://github.com/manukautech/XMRemoteRobot)
 
