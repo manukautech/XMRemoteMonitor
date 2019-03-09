@@ -1,9 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!--
+    This is part of the XMRemoteMonitor project - programming devices to act as monitoring cameras
+    Copyright © 2018 John Calder as project leader
+    Licensed under the "Open Source" Apache License, Version 2.0.
+    See file LICENSE in the parent project root.
+    https://github.com/manukautech/XMRemoteMonitor
+    In brief, a generous license with some attribution rights reserved.
+    Retain these notices on copies or minor mod (fork) versions of XMRemoteMonitor.
+    For apps that are mostly your own work using substantial sections of this code
+    we want a brief attribution note(s) - as developer-readable code comments is OK. 
+    We also ask for a thank-you email to us and/or a thank-you note on your project forum 
+    - these look good in our research reports. That is a zero cost way for you to encourage
+    and support the further development of this and related projects.
+    This project email: mitcitmm@gmail.com    
+    Other contact details for John are on the Contact+About page, code is below.
+    -->
     <link href="css/site.css" rel="stylesheet" />
 
-    <!--2019-01-08 move all scripting to the head section so that code most subject 
+    <!--2019-01-08 move all scripting to the head section so that code most subject
     to configuration appears first-->
     <script src="js/adapter.js"></script>
     <script src="js/signalr.min.js"></script>
@@ -243,7 +259,7 @@
     <script>
         //WebPageCam camera handler
         function wstart(message) {
-            //message values are "request" or "takeover" as in 
+            //message values are "request" or "takeover" as in
             //request a channel number or force a takeover of a channel number
             robotId = parseInt(document.getElementById("CameraNumber").value) + 100;
             var jsonObject = new Object();
@@ -258,7 +274,7 @@
         }
 
         function diffCamInit() {
-            //Initialise the DiffCamEngine libary for image capture 
+            //Initialise the DiffCamEngine libary for image capture
             //after function wstart() above passes communication channel check
             DiffCamEngine.init(diffCamOptions);
         }
@@ -582,8 +598,10 @@
 
             <div id="pageAbout" class="xpage" style="display:none">
                 <h2>"XMRemoteMonitor" is a web-app based monitoring-camera system:</h2>
-                <p>Open source home is on "github":<br />
-                    <a href="https://github.com/manukautech/XMRemoteMonitor">https://github.com/manukautech/XMRemoteMonitor</a></p>
+                <p>
+                    Open source home is on "github":<br />
+                    <a href="https://github.com/manukautech/XMRemoteMonitor">https://github.com/manukautech/XMRemoteMonitor</a>
+                </p>
 
                 <address>
                     <strong>Project Contact:</strong>: <a href="mailto:mitcitmm@gmail.com">mitcitmm@gmail.com</a><br />
@@ -636,4 +654,4 @@
     </div>
 
 </body>
-</html >
+</html>
