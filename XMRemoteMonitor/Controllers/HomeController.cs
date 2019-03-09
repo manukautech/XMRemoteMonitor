@@ -1,9 +1,10 @@
 ﻿/*
-      Project XMRemoteMonitor - Welcome, info and test page designs are served from here.
-      v2.0 - change to SignalR - communications hub is now "RobotHub.cs"
-      Copyright © 2017 John Calder as project leader
-      Licensed under the "Open Source" Apache License, Version 2.0. 
-      See file "LICENSE" in the project root for license information.
+      Project XMRemoteMonitor - HomeController
+      HomeController is Server-side code for page loading 
+      and AJAX request handling.
+      Project XMRemoteMonitor is an Open Source project. 
+      See Project home repository on Github for details:
+      https://github.com/manukautech/XMRemoteMonitor
 */
 
 using Microsoft.AspNetCore.Mvc;
