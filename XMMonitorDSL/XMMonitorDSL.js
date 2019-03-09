@@ -2,7 +2,7 @@
 //Remote monitoring camera Android client for use with the XMRemoteMonitor server app.
 //Part of the open source project "XMRemoteMonitor" - ref:
 //https://github.com/manukautech/XMRemoteMonitor
-
+  
 //Attribution:
 //"XMMonitorDSL" is based on the sample app "Camera Motion" by droidscript.org
 //"Camera Motion" is part of the Sample App documentation of the "DroidScript" package which is available in Google Play:
