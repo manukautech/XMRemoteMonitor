@@ -8,7 +8,7 @@ Easiest use is on devices which can run an HTML5-capable browser which continues
 [https://bugzilla.mozilla.org/show_bug.cgi?id=1521760](https://bugzilla.mozilla.org/show_bug.cgi?id=1521760)  
 More about this in our "Issue 1.2" - Ref:  
 [https://github.com/manukautech/XMRemoteMonitor/issues/3](https://github.com/manukautech/XMRemoteMonitor/issues/3)  
-We have therefore coded a local app which runs in the "Droidscript" environment. The basic Droidscript is free from Google Play. 
+We have therefore coded a local app which runs in the "Droidscript" environment. The basic Droidscript is a free App from Google Play. 
 
 This XMRemoteMonitor download has a placeholder "Access Key" of "111111". 
 Edit "appSettings.json" to change this. 
