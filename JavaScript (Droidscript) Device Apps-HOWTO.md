@@ -10,7 +10,7 @@ XMMonitorDSL is our number one phone app for most phones:
 XMMonitorDSH is an experimental alternative built with HTML, hence the H at the end of the name.
 - runs when the phone is horizontal or vertical
 - has a greater range of adjustments for image size and quality
-- runs 30 hours on our testing with a Vodafone E8 phone and 1 20000 mAh powerpack.
+- runs 30 hours on our testing with a Vodafone E8 phone and a 20000 mAh powerpack.
    
   
     
