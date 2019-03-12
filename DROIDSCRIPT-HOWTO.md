@@ -1,8 +1,7 @@
 # HOWTO load JavaScript files into the Droidscript Environment
 
 Droidscript apps are plain text JavaScript files.  
-An app is defined by a DroidScript sub-folder with the startup program being a JavaScript file with a filename based on the sub-folder.  
-e.g. folder "XMMonitorDSL" containing file "XMMonitorDSL.js".  
+An app is defined by a DroidScript sub-folder with the startup program being a JavaScript file with a filename based on the sub-folder name. e.g. folder "XMMonitorDSL" containing file "XMMonitorDSL.js".  
 
 Install DroidScript from the Google Play Store. The base DroidScript is a free app and is capable of running these programs.  
 
