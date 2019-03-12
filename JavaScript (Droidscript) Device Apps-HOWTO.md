@@ -10,8 +10,8 @@ XMMonitorDSH is an experimental alternative built with HTML, hence the H at the 
 - runs when the phone is horizontal or vertical
 - has a greater range of adjustments for image size and quality
 - runs 30 hours on our testing with a Vodafone E8 phone and 1 20000 mAh powerpack.
- 
-
+   
+  
 # HOWTO load JavaScript files into the Droidscript Environment
 
 Droidscript apps are plain text JavaScript files.  
