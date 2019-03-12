@@ -6,12 +6,14 @@ XMMonitorDSL is our number one phone app for most phones:
 - runs only when the phone is horizontal
 - runs 42 hours on our testing with a Vodafone E8 phone and a 20000 mAh powerpack.
   
+    
 XMMonitorDSH is an experimental alternative built with HTML, hence the H at the end of the name.
 - runs when the phone is horizontal or vertical
 - has a greater range of adjustments for image size and quality
 - runs 30 hours on our testing with a Vodafone E8 phone and 1 20000 mAh powerpack.
    
   
+    
 # HOWTO load JavaScript files into the Droidscript Environment
 
 Droidscript apps are plain text JavaScript files.  
