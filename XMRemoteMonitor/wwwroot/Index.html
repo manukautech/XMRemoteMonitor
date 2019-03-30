@@ -1,10 +1,27 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
+    <!--
+    This is part of the XMRemoteMonitor project - programming devices to act as monitoring cameras
+    Copyright © 2018 John Calder as project leader
+    Licensed under the "Open Source" Apache License, Version 2.0.
+    See file LICENSE in the parent project root.
+    https://github.com/manukautech/XMRemoteMonitor
+    In brief, a generous license with some attribution rights reserved.
+    Retain these notices on copies or minor mod (fork) versions of XMRemoteMonitor.
+    For apps that are mostly your own work using substantial sections of this code
+    we want a brief attribution note(s) - as developer-readable code comments is OK. 
+    We also ask for a thank-you email to us and/or a thank-you note on your project forum 
+    - these look good in our research reports. That is a zero cost way for you to encourage
+    and support the further development of this and related projects.
+    This project email: mitcitmm@gmail.com    
+    Other contact details for John are on the Contact+About page, code is below.
+    -->
     <link href="css/site.css" rel="stylesheet" />
 
-    <!--2019-01-08 move all scripting to the head section so that code most subject 
+    <!--2019-01-08 move all scripting to the head section so that code most subject
     to configuration appears first-->
+    <script src="js/adapter.js"></script>
     <script src="js/signalr.min.js"></script>
     <script src="js/diff-cam-engine-xjpc.js"></script>
 
@@ -14,7 +31,7 @@
         var lockTimeStart = (new Date()).getTime();
         var lockTimeout = 30000; //30 seconds
         //2018-12-26 JPC trigger override capture without motion detection on long timeout
-        var overrideTimeout = 900000; //900 seconds ie 15 min
+        var overrideTimeout = 900000; // temp 90 seconds //900 seconds ie 15 min
         var workingOverrideTimeout = overrideTimeout;
         //var isAJAXNav = false; // -- possible future use for loading page panels from separate files by AJAX
 
@@ -35,10 +52,6 @@
         //https://www.w3schools.com/xml/ajax_xmlhttprequest_send.asp
         //https://www.w3schools.com/js/js_ajax_http.asp
         var xmlhttp = new XMLHttpRequest();
-
-        //2019-01-09 JPC have a placeholder image for use when camera is scheduled off 
-        //    but still needs to run to keep the session alive.
-        var placeholderBase64 = "";
 
         //Scheduled active from 7pm to 6:30am on weekdays plus all weekend
         //'return true' effect is to capture images on motion detection
@@ -104,9 +117,8 @@
 
             if (!hasReadSettings) {
                 //Read the app setting from an AJAX call to server-side
-                //html-based rather than MVC-cshtml-based makes path management easier
-                requestURL = "Home/GetSettings";
-                xmlhttp.open("GET", requestURL, true);
+                requestURL = appPath() + "Home/GetSettings";
+                xmlhttp.open("POST", requestURL, true);
                 //xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 isSendingLock = true;
                 xmlhttp.send();
@@ -146,14 +158,19 @@
             var jsonObject = JSON.parse(signal);
             if (signal.indexOf("issuccess") > -1 && !jsonObject.issuccess) {
                 alert(jsonObject.message);
+                if (jsonObject.categoryid && jsonObject.categoryid == 6 && jsonObject.message.indexOf("takeover") > -1) {
+                    //if a channel is not available, display the takeover button
+                    document.getElementById("Takeover").style.display = "inline";
+                }
             } else if (jsonObject.categoryid && jsonObject.categoryid == 20) {
                 //Response to GetSettings
                 if (jsonObject.debug) debug = true;
-                placeholderBase64 = jsonObject.xdata[0];
+                //2019-01-27 JPC replaced placeholderBase64 data with an options flag
+                //placeholderBase64 = jsonObject.xdata[0];
                 document.getElementById("Monitor").innerText = "AJAX connection is ready.";
                 hasReadSettings = true;
             } else if (jsonObject.categoryid && jsonObject.categoryid == 21) {
-                document.getElementById("Monitor").innerText = "Image saved OK at " + xgetTime() + ".";
+                document.getElementById("Monitor").innerText = "Image saved OK at " + xgetTime();
                 var jsonResponse = new Object();
                 jsonResponse["categoryid"] = 2;
                 jsonResponse["commanderid"] = robotId - 100;
@@ -165,18 +182,21 @@
             } else if (jsonObject.categoryid && jsonObject.categoryid == 22) {
                 reviewProcess(jsonObject);
 
-            } else if (jsonObject.categoryid && jsonObject.categoryid == 6 && jsonObject.commanderid == 0) {
-                //authentication success
+            } else if (jsonObject.categoryid && jsonObject.commanderid == 0 && jsonObject.categoryid == 6) {
+                //initial authentication and comms test success
                 document.getElementById("LoginConfirm").innerText = jsonObject.message;
                 document.getElementById("AccessKey").disabled = true;
                 document.getElementById("XSubmit").disabled = true;
                 isSignalRConnection = true;
-                //technique for temporary emphasis
+                //technique for highlighting the confirmation message for 1.2 seconds
                 document.getElementById("LoginConfirm").style.backgroundColor = "yellow";
                 document.getElementById("LoginConfirm").style.fontWeight = "bold";
                 window.setTimeout(timeoutLoginDisplay, 1200);
             } else if (jsonObject.categoryid && jsonObject.categoryid == 6) {
+                //camera channel registration success
                 document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " connected.";
+                //start diff-cam-engine-xjpc on passing this test
+                diffCamInit();
             } else if (jsonObject.categoryid && jsonObject.categoryid == 5) {
                 document.getElementById("Monitor").innerText = "Camera " + jsonObject.commanderid + " monitoring.";
                 document.getElementById("MonitorDetail").style.display = "block";
@@ -238,19 +258,25 @@
 
     <script>
         //WebPageCam camera handler
-        function wstart() {
-            //Initialise the DiffCamEngine libary for image capture
-            DiffCamEngine.init(diffCamOptions);
-
+        function wstart(message) {
+            //message values are "request" or "takeover" as in
+            //request a channel number or force a takeover of a channel number
             robotId = parseInt(document.getElementById("CameraNumber").value) + 100;
             var jsonObject = new Object();
             jsonObject["categoryid"] = 6;
             jsonObject["commanderid"] = robotId - 100;
             jsonObject["robotid"] = robotId;
+            jsonObject["message"] = message;
             jsonObject["accesskey"] = document.getElementById("AccessKey").value;
 
             var signal = JSON.stringify(jsonObject);
             connection.invoke("XSignal", signal);
+        }
+
+        function diffCamInit() {
+            //Initialise the DiffCamEngine libary for image capture
+            //after function wstart() above passes communication channel check
+            DiffCamEngine.init(diffCamOptions);
         }
 
         function initSuccess() {
@@ -279,24 +305,24 @@
             //2018-12-26 JPC trigger override capture on long timeout
             if (payload.hasMotion || isCaptureOverride) {
                 try {
-                    var request
+                    var request;
+                    var options;
                     if (scheduledActive()) {
                         request = payload.getURL();
+                        //handle the jpeg or png prefix section
+                        var headerLength = request.indexOf(";base64,") + 8;
+                        request = request.slice(headerLength);
+                        options = "base64";
                     } else {
-                        request = placeholderBase64;
+                        request = "";
+                        options = "placeholder";
                     }
-                    var requestCheck = request.slice(0, 307);
-                    //document.getElementById("Monitor").innerText = request.length + " ..." + requestCheck.slice(75, 100) + "...";
-
                     var formData = new FormData();
                     formData.append("CameraNumber", document.getElementById("CameraNumber").value);
                     formData.append("AccessKey", document.getElementById("AccessKey").value);
-                    //2018-12-16 JPC change from image/png to image/jpeg means that we need slice(headerLength) rather than slice(23) or slice(22)
-                    headerLength = requestCheck.indexOf(";base64,") + 8;
-                    formData.append("ImageBase64", request.slice(headerLength));
+                    formData.append("ImageBase64", request);
+                    formData.append("Options", options);
 
-                    //2018-12-15 JPC allow for use of an application folder that is a child of a website
-                    //website is "/", child application is "/rm/"
                     var requestString = appPath() + "Home/ImagePost";
                     var oeWebPageCamInfo = document.getElementById("WebPageCamInfo");
                     if (isCaptureOverride) {
@@ -305,7 +331,7 @@
                         oeWebPageCamInfo.innerText = "Sending ";
                     }
                     oeWebPageCamInfo.innerText += request.length + " chars ";
-                    if (debug) oeWebPageCamInfo.innerText += "..." + requestCheck.slice(300, 307) + "..."
+                    if (debug) oeWebPageCamInfo.innerText += "..." + request.slice(350, 357) + "..."
                     oeWebPageCamInfo.innerText += " at " + xgetTime();
                     if (debug) oeWebPageCamInfo.innerText += " to " + requestString;
                     //throw new Error("Test error");
@@ -333,6 +359,8 @@
             jsonObject["commanderid"] = commanderId;
             jsonObject["robotid"] = commanderId + 100;
             jsonObject["accesskey"] = document.getElementById("AccessKey").value;
+            //2019-01-24 JPC the one operator in this system will always own command of any camera channel
+            jsonObject["message"] = "takeover";
 
             var signal = JSON.stringify(jsonObject);
             connection.invoke("XSignal", signal);
@@ -463,15 +491,17 @@
             }
         }
 
+        //Returns local time in format HH:mm:ss.ss example 21:03:16.81
         function xgetTime() {
             var d = new Date();
             var hours = ("00" + d.getHours()).slice(-2);
             var minutes = ("00" + d.getMinutes()).slice(-2);
             var seconds = ("00" + d.getSeconds()).slice(-2);
-            var milliseconds = (d.getMilliseconds() + "000").slice(2);
-            nowTime = hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+            var decimalSeconds = ("000" + d.getMilliseconds()).slice(-3).slice(0, 2);
+            nowTime = hours + ":" + minutes + ":" + seconds + "." + decimalSeconds;
             return nowTime;
         }
+
 
     </script>
 </head>
@@ -501,16 +531,18 @@
 
             <div id="pageWebPageCam" class="xpage" style="display:none">
                 Camera number:
-                <select id="CameraNumber">
+                <select id="CameraNumber" onchange="document.getElementById('Takeover').style.display = 'none';">
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
                     <option value="5">5</option>
                 </select>
-                <button onclick="wstart();">Start</button>
+                <button onclick="wstart('request');">Request</button>&nbsp;
+                <button id="Takeover" onclick="wstart('takeover');" style="display:none; background-color:yellow">Takeover</button>
                 <br />
-                <video id="xcam" muted autoplay style="width:60%;max-width:640px;"></video>
+                <!--2019-01-23 JPC reduce video preview width from 60% to 30%-->
+                <video id="xcam" muted autoplay style="width:30%;max-width:640px;"></video>
                 <canvas id="xmotion" width="0" height="0"></canvas>
                 <br />
                 <pre id="WebPageCamInfo"></pre>
@@ -530,7 +562,7 @@
                         <option value="5">5</option>
                     </select>
                     <button onclick="mstart();">Start</button>
-                    <br />
+                    <br /><br />
                     <div id="MonitorDetail" style="display:none">
                         <button id="RemoteCapture" onclick="remoteCapture();">Remote&nbsp;Capture</button><br />
                         <img id="imgMonitor" src="#" />
@@ -566,8 +598,10 @@
 
             <div id="pageAbout" class="xpage" style="display:none">
                 <h2>"XMRemoteMonitor" is a web-app based monitoring-camera system:</h2>
-                <p>Open source home is on "github":<br />
-                    <a href="https://github.com/manukautech/XMRemoteMonitor">https://github.com/manukautech/XMRemoteMonitor</a></p>
+                <p>
+                    Open source home is on "github":<br />
+                    <a href="https://github.com/manukautech/XMRemoteMonitor">https://github.com/manukautech/XMRemoteMonitor</a>
+                </p>
 
                 <address>
                     <strong>Project Contact:</strong>: <a href="mailto:mitcitmm@gmail.com">mitcitmm@gmail.com</a><br />
@@ -587,7 +621,7 @@
                 </address>
 
                 <p>
-                    Copyright Â© 2018 John Calder as Project Leader.<br />
+                    Copyright © 2018 John Calder as Project Leader.<br />
                     XMRemoteMonitor software, and related camera designs published with it, is an "Open Source" project. We apply the Apache Licence:<br />
                     http://www.apache.org/licenses/LICENSE-2.0
                     <br /><br />
@@ -600,6 +634,7 @@
 
                 <p>
                     This is an output from research, teaching and learning at the Manukau Institute of Technology, Auckland, New Zealand
+                    Students making significant contributions to "XMRemoteMonitor": Amber Baker, Sadia Afrin.
                 </p>
             </div>
 
@@ -619,4 +654,4 @@
     </div>
 
 </body>
-</html >
+</html>
