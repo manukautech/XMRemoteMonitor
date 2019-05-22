@@ -1,16 +1,16 @@
-# XMRemoteMonitor Version 0.9.0 Beta
+# XMRemoteMonitor Version 0.9.1 Beta
 A web app that enables Android smart phones and some other devices to act as remote monitoring cameras capturing images on motion detection.
 Scenarios include:
 - Security Camera
 - Watching bird sanctuaries to study rat and other pest behaviours
   
-Easiest use is on devices which can run an HTML5-capable browser which continues to run when the screen is locked. For Android smart phones this usually means installing and using FireFox. We have however run into Firefox crashes on phones with less than 1.5 G of RAM and we have identified this as a bug in Firefox. The Mozilla Foundation has accepted our bug report and is now working on this. Ref:  
-[https://bugzilla.mozilla.org/show_bug.cgi?id=1521760](https://bugzilla.mozilla.org/show_bug.cgi?id=1521760)  
-More about this in our "Issue 1.2" - Ref:  
-[https://github.com/manukautech/XMRemoteMonitor/issues/3](https://github.com/manukautech/XMRemoteMonitor/issues/3)  
-We have therefore coded a local app which runs in the "Droidscript" environment. The basic Droidscript is a free App from Google Play. 
+Easiest quick test is on devices e.g. laptops which can run an HTML5-capable browser. The web app can provide a web page which manages the camera, adds motion detection and sends images to the server.
+Our preferred client is to run the app "XMMonitorDSL" on an Android smartphone. "XMMonitorDSL" can save files both locally and on the server."XMMonitorDSL" can also run on a schedule, e.g. capture images only at night and save power during the day by shutting down camera operations. In Android we run "XMMonitorDSL" in "pinned" mode with the screen brightness turned down to its lowest setting.
 
-This XMRemoteMonitor download has a placeholder "Access Key" of "111111". 
+XMRemoteMonitor used to save 1 folder of photos on the server for each day of operation. We now have an option, switched on by default, to save 1 folder of photos for each night of operation. That way we can look in one folder to see the story of a night. 
+Edit "appSettings.json" to configure this option.
+
+Also in "appSetting.json" is a placeholder "Access Key" of "111111". 
 Edit "appSettings.json" to change this. 
 We recommend a 6 digit number for easy data entry from a smart phone.  
 
