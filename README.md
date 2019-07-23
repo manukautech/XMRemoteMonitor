@@ -35,7 +35,7 @@ XMRemoteMonitor writes captured photos to a folder named "modet" (motion detecti
 Note for Windows Azure App Services. The time zone is set to UTC (aka "Greenwich Mean Time", "Co-ordinated Universal Time"). To set for your time zone you can use the Azure Portal web app service control panel under "Configuration" to set an "Application Setting" of "WEBSITE_TIME_ZONE" with a value like "UTC+12", "UTC+10", "UTC-5". You would then need to manually correct this when your region applies Daylight Saving Time. For me in New Zealand I need "UTC+12" in winter and "UTC+13" in summer.
 
 Current issues include:  
-- Power supply for environments without mains power. We are working on combinations of additional batteries and solar panels.
+- Power supply for environments without mains power. We are working on combinations of additional batteries and solar panels. This version 0.91 of Android Client "XMMonitorDSL" can switch into a low power mode during the day with the camera on standby. On an "Alcatel One" smartphone this gives a current draw of 140mA during the day and 340mA when active at night.
 - Near-real-time Monitor has stopped working on some field tests.  We recommend trying "Monitor" only for short run lab testing.  "Review" gives us reliable remote viewing so stick to "Review" until further notice.  
 - Motion Detection in daylight field tests gets a lot of false positives from trees and plants moving in the wind as well as light level changes as clouds move across the sun.  
 - Can smart phone cameras deliver night vision with infra red lighting? Yes, with an invasive modification involving removing an "infra red cut filter" from behind the lens. We do this to old secondhand phones. More info at:  
