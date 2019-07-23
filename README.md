@@ -29,8 +29,8 @@ Quickest first test is to run in Visual Studio on a computer with a webcam. Run 
 
 XMRemoteMonitor hosting has so far been tested on an Amazon Lightsail Windows 2016 virtual machine server and on a Microsoft Windows Azure Hosted App Service.
 XMRemoteMonitor writes captured photos to a folder named "modet" (motion detection).  
-For Virtual Machines, e.g. Amazon Lightsail, you need to make sure that this folder has write permissions for the IIS_IUSRS (Internet Users) system account. 
-Windows Azure App Services - our testing finds that we can write into this folder without the need for any special configuration.
+- For Virtual Machines, e.g. Amazon Lightsail, you need to make sure that this folder has write permissions for the IIS_IUSRS (Internet Users) system account.  
+- For Windows Azure App Services - our testing finds that we can write into this folder without the need for any special configuration.
 
 Note for Windows Azure App Services. The time zone is set to UTC (aka "Greenwich Mean Time", "Co-ordinated Universal Time"). To set for your time zone you can use the Azure Portal web app service control panel under "Configuration" to set an "Application Setting" of "WEBSITE_TIME_ZONE" with a value like "UTC+12", "UTC+10", "UTC-5". You would then need to manually correct this when your region applies Daylight Saving Time. For me in New Zealand I need "UTC+12" in winter and "UTC+13" in summer.
 
@@ -39,7 +39,7 @@ Current issues include:
 - Near-real-time Monitor has stopped working on some field tests.  We recommend trying "Monitor" only for short run lab testing.  "Review" gives us reliable remote viewing so stick to "Review" until further notice.  
 - Motion Detection in daylight field tests gets a lot of false positives from trees and plants moving in the wind as well as light level changes as clouds move across the sun.  
 - Can smart phone cameras deliver night vision with infra red lighting? Yes, with an invasive modification involving removing an "infra red cut filter" from behind the lens. We do this to old secondhand phones. More info at:  
-[http://hitechfromlotech.blogspot.com/2019/03/smartphone-vfd-300-as-infra-red-camera.html](Smartphone VFD-300 as an Infra-Red Camera).  
+["Smartphone VFD-300 as an Infra-Red Camera"](https://hitechfromlotech.blogspot.com/2019/03/smartphone-vfd-300-as-infra-red-camera.html).  
 - Is infra red lighting the best human intruder management security strategy? Visible light flash may be better.
 - Care with privacy issues when using as a security camera. For our scenarios a starting point is to only use in private spaces at times where there should be no person there. Avoid any visibility of public and semi-public spaces. Check and review the privacy laws and regulations for your nation and/or territory.  
 - Care with setting up devices outdoors so they do not overheat in sunlight. Best simple quick enclosure from our testing results is a transparent plastic food container lined with light-coloured gaffer tape aka duct tape.  
