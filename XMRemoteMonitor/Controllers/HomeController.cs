@@ -33,14 +33,17 @@ namespace XMRemoteMonitor.Controllers
 		//private string _connectionString;
 		private readonly string _appAccessKey;
         private readonly bool _debug = false;
+        private readonly bool _nightfolders = true;
 
-		public HomeController(IConfiguration configuration, IHostingEnvironment env)
+        public HomeController(IConfiguration configuration, IHostingEnvironment env)
 		{
 			//_connectionString = configuration.GetConnectionString("DefaultConnection");
 			_appAccessKey = configuration.GetSection("AppSettings")["appAccessKey"];
-            string debug = configuration.GetSection("AppSettings")["debug"].ToLower();
-            //"readonly" value as above can be changed in the constructor
-            if (debug == "true") _debug = true;
+            //string debug = configuration.GetSection("AppSettings")["debug"].ToLower();
+            ////"readonly" value as above can be changed in the constructor
+            //if (debug == "true") _debug = true;
+            _debug = Convert.ToBoolean(configuration.GetSection("AppSettings")["debug"]);
+            _nightfolders = Convert.ToBoolean(configuration.GetSection("AppSettings")["nightfolders"]);
             _env = env;
 		}
 
@@ -118,7 +121,11 @@ namespace XMRemoteMonitor.Controllers
             }
 
             string webRoot = _env.WebRootPath;
-            string folderName = DateTime.Now.ToString("yyyy-MM-dd") + "\\" + CameraNumber;
+            //2019-04-19 JPC group images in night folders 12midday 12:00 
+            double hoursShift = 0.0;
+            if (_nightfolders) hoursShift = -12.0;
+            DateTime dayShift = DateTime.Now.AddHours(hoursShift);
+            string folderName = dayShift.ToString("yyyy-MM-dd") + "\\" + CameraNumber;
             System.IO.Directory.CreateDirectory(webRoot + "\\modet\\" + folderName);
             string fileWithLocation = "modet\\" + folderName + "\\" + XDayTime() + ".jpg";
             string filePath = Path.Combine(webRoot, fileWithLocation);
@@ -245,10 +252,24 @@ namespace XMRemoteMonitor.Controllers
             return s;
         }
 
+        //2019-04-19 JPC group images in night folders 12:00:00
+        //to the following 11:59:59.99
         private string XDayTime()
         {
             //ref: https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings?view=netframework-4.7.2
             string s = DateTime.Now.ToString("HH-mm-ss.ff");
+            if(_nightfolders)
+            {
+                int hours = Convert.ToInt32(s.Substring(0, 2));
+                if (hours >= 12)
+                {
+                    s = "A_" + s;
+                }
+                else
+                {
+                    s = "B_" + s;
+                }
+            }
             return s;
         }
 	}
