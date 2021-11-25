@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <Version>0.9.0</Version>
+    <Version>0.9.1</Version>
     <UserSecretsId>797dff71-81b8-4c84-8d83-5b55bd42e3d9</UserSecretsId>
     <TypeScriptToolsVersion>3.1</TypeScriptToolsVersion>
     <Copyright>John Calder as Group Leader</Copyright>
