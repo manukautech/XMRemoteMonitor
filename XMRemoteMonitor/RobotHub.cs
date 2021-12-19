@@ -46,7 +46,7 @@ namespace XMRemoteMonitor
         {"categoryid":6,"commanderid":13,"robotid":113,"accesskey":"demo-access-key"}  
             
         Example Command
-        {"categoryid":1,"commanderid":13,"robotid":113,"accesskey":"metropolis592"
+        {"categoryid":1,"commanderid":13,"robotid":113,"accesskey":"demo-access-key"
         ,"islog:0;"xdata":{ "sx1x1":92, "sx1x2":83, "sx2x1":0, "sx2x2":0}}
         */
 
